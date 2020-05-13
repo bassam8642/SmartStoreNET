@@ -81,6 +81,9 @@ namespace SmartStore.Admin.Controllers
                     {
                         resultParams.fileId = dupe.Id;
                         resultParams.url = _mediaService.GetUrl(dupe, _mediaSettings.ProductThumbPictureSize, host: string.Empty);
+                        resultParams.date = dupe.CreatedOn.ToString();
+                        resultParams.dimensions = dupe.Dimensions.Width + " x " + dupe.Dimensions.Height;
+                        resultParams.size = dupe.Size;
                     }
                     
                     result.Add(resultParams);
@@ -90,6 +93,13 @@ namespace SmartStore.Admin.Controllers
             // TODO: (mm) display error notification for every failed file
 
             return Json(result.Count == 1 ? result[0] : result);
+        }
+
+        //[ChildActionOnly]
+        [HttpPost]
+        public ActionResult DupeFileHandlerDialog()
+        {
+            return PartialView();
         }
 
         public ActionResult MoveFsMedia()

@@ -281,6 +281,7 @@
     <Compile Include="Extensions\IOExtensions.cs" />
     <Compile Include="Extensions\NumericExtensions.cs" />
     <Compile Include="Data\IQueryableExtensions.cs" />
+    <Compile Include="Extensions\ProcessExtensions.cs" />
     <Compile Include="Extensions\RegexExtensions.cs" />
     <Compile Include="Extensions\RouteExtensions.cs" />
     <Compile Include="Extensions\XPathExtensions.cs" />
@@ -309,6 +310,7 @@
     <Compile Include="IAuditable.cs" />
     <Compile Include="ITransient.cs" />
     <Compile Include="Collections\TrimmedBuffer.cs" />
+    <Compile Include="Linq\ExpressionStarter.cs" />
     <Compile Include="Localization\ILocalizationFileResolver.cs" />
     <Compile Include="Localization\LocalizationFileResolver.cs" />
     <Compile Include="Localization\LocalizationHelper.cs" />

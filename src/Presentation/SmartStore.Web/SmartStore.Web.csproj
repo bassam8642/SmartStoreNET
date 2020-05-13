@@ -1211,6 +1211,7 @@
     <Content Include="Content\vendors\jquery\jquery.validate.unobtrusive.js" />
     <Content Include="Content\vendors\jquery\jquery.validate.unobtrusive.min.js" />
     <Content Include="Content\vendors\modernizr\modernizr.js" />
+    <Content Include="Scripts\smartstore.media.js" />
     <Content Include="Scripts\smartstore.tree.js" />
     <Content Include="Scripts\smartstore.linkbuilder.js" />
     <Content Include="Scripts\smartstore.rangeslider.js" />
@@ -1850,7 +1851,6 @@
     <Content Include="Views\Blog\Partials\BlogSummary.cshtml" />
     <Content Include="Views\Common\Partials\CookieManager.cshtml" />
     <Content Include="Views\Shared\Components\_FileUploader.cshtml" />
-    <Content Include="Views\Common\Partials\FileUploaderDuplicateDialog.cshtml" />
     <None Include="Web.EFMigrations.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
