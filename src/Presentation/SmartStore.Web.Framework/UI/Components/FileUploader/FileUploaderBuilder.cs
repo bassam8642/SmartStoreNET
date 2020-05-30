@@ -1,4 +1,6 @@
 ﻿using SmartStore.Core.Domain.Catalog;
+using SmartStore.Core.Infrastructure;
+using SmartStore.Services.Media;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,7 @@ namespace SmartStore.Web.Framework.UI
             : base(component, htmlHelper)
         {
 			WithRenderer(new ViewBasedComponentRenderer<FileUploader>("FileUploader"));
+			TypeFilter("*");
 		}
 
 		public FileUploaderBuilder<TModel> Path(string value)
@@ -30,24 +33,6 @@ namespace SmartStore.Web.Framework.UI
 			return this;
 		}
 
-		public FileUploaderBuilder<TModel> IconCssClass(string value)
-		{
-			base.Component.IconCssClass = value;
-			return this;
-		}
-
-		public FileUploaderBuilder<TModel> ButtonStyle(ButtonStyle value)
-		{
-			base.Component.ButtonStyle = value;
-			return this;
-		}
-
-		public FileUploaderBuilder<TModel> ButtonOutlineStyle(bool value)
-		{
-			base.Component.ButtonOutlineStyle = value;
-			return this;
-		}
-
 		public FileUploaderBuilder<TModel> ShowRemoveButton(bool value)
 		{
 			base.Component.ShowRemoveButton = value;
@@ -57,6 +42,7 @@ namespace SmartStore.Web.Framework.UI
 		public FileUploaderBuilder<TModel> ShowRemoveButtonAfterUpload(bool value)
 		{
 			base.Component.HtmlAttributes["data-show-remove-after-upload"] = value.ToString().ToLower();
+			base.Component.ShowRemoveButtonAfterUpload = value;
 			return this;
 		}
 
@@ -65,10 +51,33 @@ namespace SmartStore.Web.Framework.UI
 			base.Component.Compact = value;
 			return this;
 		}
+		
+		public FileUploaderBuilder<TModel> ShowBrowseMedia(bool value)
+		{
+			base.Component.ShowBrowseMedia = value;
+			return this;
+		}
+
+		public FileUploaderBuilder<TModel> HasTemplatePreview(bool value)
+		{
+			base.Component.HasTemplatePreview = value;
+			return this;
+		}
 
 		public FileUploaderBuilder<TModel> Multifile(bool value)
 		{
 			base.Component.Multifile = value;
+			return this;
+		}
+
+		public FileUploaderBuilder<TModel> TypeFilter(string value)
+		{
+			var mediaTypeResolver = EngineContext.Current.Resolve<IMediaTypeResolver>();
+			var extensions = mediaTypeResolver.ParseTypeFilter(value);
+
+			base.Component.HtmlAttributes["data-accept"] = "." + String.Join(",.", extensions);
+			base.Component.TypeFilter = value;
+
 			return this;
 		}
 
@@ -120,33 +129,6 @@ namespace SmartStore.Web.Framework.UI
 			return this;
 		}
 
-		public FileUploaderBuilder<TModel> AcceptedFileTypes(string value)
-		{
-			if (value.IsEmpty())
-			{
-				if (base.Component.HtmlAttributes.ContainsKey("data-accept"))
-					base.Component.HtmlAttributes.Remove("data-accept");
-			}
-			else
-			{
-				base.Component.HtmlAttributes["data-accept"] = value;
-			}
-			
-			return this;
-		}
-
-		public FileUploaderBuilder<TModel> CancelText(string value)
-		{
-			base.Component.CancelText = value;
-			return this;
-		}
-
-		public FileUploaderBuilder<TModel> RemoveText(string value)
-		{
-			base.Component.RemoveText = value;
-			return this;
-		}
-
 		public FileUploaderBuilder<TModel> UploadText(string value)
 		{
 			base.Component.UploadText = value;
@@ -186,6 +168,12 @@ namespace SmartStore.Web.Framework.UI
 		public FileUploaderBuilder<TModel> OnCompletedHandlerName(string handlerName)
 		{
 			base.Component.OnCompletedHandlerName = handlerName;
+			return this;
+		}
+
+		public FileUploaderBuilder<TModel> OnMediaSelectedHandlerName(string handlerName)
+		{
+			base.Component.OnMediaSelectedHandlerName = handlerName;
 			return this;
 		}
 	}

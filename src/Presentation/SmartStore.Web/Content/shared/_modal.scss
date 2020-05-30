@@ -8,10 +8,10 @@ $modal-transition-timing: cubic-bezier(0.165, 0.84, 0.44, 1); // easeOutQuart
 
 
 // FLEX MODAL
-// ------------------------------------
+// ------------------------------------------------------------
 
 /*.modal-backdrop.show {
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(20px);
 }*/
 
 .modal-backdrop.fade {
@@ -36,16 +36,18 @@ $modal-transition-timing: cubic-bezier(0.165, 0.84, 0.44, 1); // easeOutQuart
     }
 }
 
-.modal-open #page {
-    // fade in
-    filter: blur(2px);
-    transition: filter 0.4s $modal-transition-timing 0.15s;
-}
+.modal-has-backdrop {
+	&.modal-open #page {
+		// fade in
+		filter: blur(2px);
+		transition: filter 0.4s $modal-transition-timing 0.15s;
+	}
 
-.modal-hiding #page {
-    // fade out
-    filter: blur(0);
-    transition: filter 0.4s $modal-transition-timing;
+	&.modal-hiding #page {
+		// fade out
+		filter: blur(0);
+		transition: filter 0.4s $modal-transition-timing;
+	}
 }
 
 .modal-content {
@@ -71,7 +73,6 @@ $modal-transition-timing: cubic-bezier(0.165, 0.84, 0.44, 1); // easeOutQuart
 }
 
 .modal-closer {
-    $c: color-yiq($modal-backdrop-bg);
 	position: absolute;
 	display: none;
 	font-size: 2.5rem;
@@ -82,11 +83,17 @@ $modal-transition-timing: cubic-bezier(0.165, 0.84, 0.44, 1); // easeOutQuart
 	line-height: 1;
 	text-decoration: none !important;
 	z-index: $zindex-modal-backdrop + 1;
-    color: mix($c, $modal-backdrop-bg, 60%);
 	transition: color 0.1s;
 
+	color: $gray-600;
 	&:hover {
-        color: $c;
+        color: inherit;
+	}
+
+	.modal[data-backdrop=true] > & {
+		$c: color-yiq($modal-backdrop-bg);
+		color: mix($c, $modal-backdrop-bg, 70%);
+		&:hover { color: $c; }
 	}
 }
 
@@ -156,7 +163,59 @@ $modal-transition-timing: cubic-bezier(0.165, 0.84, 0.44, 1); // easeOutQuart
 }
 
 
+// Alert / Confirm / Prompt
+// ------------------------------------------------------------
+
+.modal.modal-box {
+	overflow-y: hidden;
+
+	.modal-header {
+		border-bottom-width: 1px;
+		padding-top: 0.75rem;
+		padding-bottom: 0.75rem;
+	}
+
+	.modal-footer > .btn {
+		min-width: 90px;
+		margin-left: 0.25rem;
+	}
+
+	&.fade .modal-dialog {
+		transition-duration: 0.25s !important;
+	}
+
+	.modal-box-body {
+		align-items: center;
+		flex-wrap: wrap;
+
+		> div + .modal-box-input {
+			padding-top: 1rem;
+		}
+	}
+
+	.modal-box-message b {
+		font-weight: $font-weight-medium;
+	}
+
+	.modal-footer {
+		justify-content: flex-end;
+	}
+
+	.modal-box-center {
+		.modal-box-body {
+			flex-direction: column;
+		}
+
+		.modal-footer {
+			justify-content: center;
+		}
+	}
+}
+
+
 .close {
     // "Fix" font-size
     font-size: 1.5rem;
+	font-weight: $font-weight-normal;
+	outline: 0 !important;
 }

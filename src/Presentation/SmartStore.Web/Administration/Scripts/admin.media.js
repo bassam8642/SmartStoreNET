@@ -1,85 +1,91 @@
 
-SmartStore.Admin.Media = {
-	openDupeFileHandlerDialog: function (dialogUrl, callback, callerId, firstDupe) {
-		var dupeFileHandlerDialog = $("#duplicate-window");
+SmartStore.Admin.Media = (function () {
+	var dupeFileHandlerDialog = $("#duplicate-window");
+	var dupeFileDisplay = dupeFileHandlerDialog.find(".dupe-file-display");
+	var _file;
 
-		if (dupeFileHandlerDialog.length === 0) {
+	function initDialog(fuContainer, firstDupe, callback, callerId) {
+		// Get dialog via ajax and append to body.
+		$.ajax({
+			async: true,
+			cache: false,
+			type: 'POST',
+			url: fuContainer.find(".fileupload").data('dialog-url'),
+			success: function (response) {
+				$("body").append($(response));
+				dupeFileHandlerDialog = $("#duplicate-window");
+				dupeFileDisplay = dupeFileHandlerDialog.find(".dupe-file-display");
 
-			// Get dialog via ajax and append to body.
+				// Display first duplicate.
+				refreshDialog(firstDupe);
+				_file = firstDupe;
 
-			$.ajax({
-				async: false,
-				cache: false,
-				type: 'POST',
-				url: dialogUrl,
-				success: function (response) {
-					$("body").append($(response));
-					dupeFileHandlerDialog = $("#duplicate-window");
+				// Open dialog.
+				dupeFileHandlerDialog.modal('show');
 
-					// display firstDupe
-					SmartStore.Admin.Media.displayDuplicateFileInDialog(firstDupe);
+				// Reset user selection on closing so dialog can open for the next queue.
+				dupeFileHandlerDialog.on('hidden.bs.modal', function () {
+					fuContainer.data("dupe-handling-type", "");
+				});
 
-					// TODO: just pass the id to the callback function.
-					// Set dz caller id to identify dropzone in outside events.
-					dupeFileHandlerDialog.attr("data-caller-id", callerId);
-					dupeFileHandlerDialog.modal('show');
-				}
-			});
+				// Listen to change events of radio group (dupe handling type) and display name of renamed file accordingly.
+				$(document).on("change", dupeFileHandlerDialog.find('input[name=dupe-handling-type]'), function (e) {
+					var fileName = _file.name;
 
-			// TODO: Listen to change events of radio button and display name of first file accordingly
-			$(document).on("change", dupeFileHandlerDialog.find('input[name=dupe-handling-type]'), function (e) {
+					if ($(e.target).val() === "2") {
+						var newPath = _file.media.newPath;
+						fileName = newPath.substr(newPath.lastIndexOf("/") + 1);
+					}
+					
+					dupeFileDisplay.find(".file-name").text(fileName);
+				});
 
-				var currentSelection = $(e.target).val();
-				var btn = dupeFileHandlerDialog.find("#start-upload");
-				var btnRes = "FileUploader.DuplicateDialog.Btn.Replace";
+			}
+		});
 
-				switch (currentSelection) {
-					case "0":
-						btnRes = "FileUploader.DuplicateDialog.Btn.Skip";
-						break;
-					case "1":
-						btnRes = "FileUploader.DuplicateDialog.Btn.Replace";
-						break;
-					case "2":
-						btnRes = "FileUploader.DuplicateDialog.Btn.Rename";
-						break;
-					default:
-				}
+		// User has made a decision.
+		$(document).on("click", "#start-upload", function () {
+			var dupeFileHandlingType = dupeFileHandlerDialog.find('input[name=dupe-handling-type]:checked').val();
+			var saveSelection = dupeFileHandlerDialog.find('#save-selection').is(":checked");
 
-				btn.text(Res[btnRes]);
-			});
+			// Store user decision where it can be accessed by other events (e.g. dropzone > sending).
+			fuContainer.data("dupe-handling-type", dupeFileHandlingType);
 
-			// User has made a decision.
-			$(document).on("click", "#start-upload", function () {
-				var duplicateHandlingType = dupeFileHandlerDialog.find('input[name=dupe-handling-type]:checked').val();
-				var saveSelection = dupeFileHandlerDialog.find('#save-selection').is(":checked");
+			if (callback)
+				callback.apply(this, [dupeFileHandlingType, saveSelection, callerId]);
+		});
 
-				if (callback)
-					callback.apply(this, [duplicateHandlingType, saveSelection]);
-			});
+		$(document).on("click", "#cancel-upload", function () {
+			dupeFileHandlerDialog.modal('hide');
 
-			$(document).on("click", "#cancel-upload", function () {
-				dupeFileHandlerDialog.modal('hide');
-			});
-		}
-	}, 
+			// All pending files must be removed from dropzone.
+			var dropzone = Dropzone.forElement(fuContainer[0]);
+			dropzone.removeAllFiles();
+		});
+	}
 
-	displayDuplicateFileInDialog: function (file) {
-		var dupeFileHandlerDialog = $("#duplicate-window");
-		var cntComparison = dupeFileHandlerDialog.find(".dupe-media-comparison");
-		var dupeFileDisplay = cntComparison.find(".dupe-file-display");
-		var existingFileDisplay = cntComparison.find(".existing-file-display");
-
-		// TODO: Renamed file must be written into reponse, so it can be displayed when user switches options.
-		/*
-		cntComparison.attr("original-file-name", file.response.name);
-		cntComparison.attr("renamed-file-name", "");
-		console.log(file);
-		*/
-
+	function refreshDialog(file) {
+		var existingFileDisplay = dupeFileHandlerDialog.find(".existing-file-display");
 		var formatedDateFile = moment(file.lastModifiedDate).format('L LTS');
 
-		dupeFileDisplay.find(".file-img").attr("src", file.dataURL);
+		// Display current filename in intro text.
+		dupeFileHandlerDialog.find(".intro .current-file").text(file.name);
+
+		// Display uploaded file.
+		var elIcon = dupeFileDisplay.find(".file-icon");
+		var elImage = dupeFileDisplay.find(".file-img");
+
+		if (!file.dataURL) {
+			// Dropzone couldn't fetch a preview for the file currently uploading.
+			var icon = SmartStore.media.getIconHint(file.media);
+			elIcon.attr("class", "file-icon fa-4x " + icon.name).css("color", icon.color);
+			elImage.addClass("d-none");
+		}
+		else {
+			elIcon.attr("class", "file-icon");
+			elImage.attr("src", file.dataURL).removeClass("d-none");
+		}
+
 		dupeFileDisplay.find(".file-name").text(file.name);
 		dupeFileDisplay.find(".file-date").text(formatedDateFile);
 		dupeFileDisplay.find(".file-size").text(_.formatFileSize(file.size));
@@ -89,10 +95,38 @@ SmartStore.Admin.Media = {
 			dupeFileDisplay.find(".file-dimensions").text(file.width + " x " + file.height);
 		}
 
-		existingFileDisplay.find(".file-img").attr("src", file.response.url);
+		// Display existing file.
+		existingFileDisplay.find(".file-img").attr("src", file.media.url);
 		existingFileDisplay.find(".file-name").text(file.name);		// No need for writing the name of the existing file into the response. We know its the same as the uploaded file.
-		existingFileDisplay.find(".file-date").text(file.response.date);
-		existingFileDisplay.find(".file-dimensions").text(file.response.dimensions);
-		existingFileDisplay.find(".file-size").text(_.formatFileSize(file.response.size));
-	}
-};
+		existingFileDisplay.find(".file-date").text(file.media.createdOn);
+		existingFileDisplay.find(".file-dimensions").text(file.media.dimensions);
+		existingFileDisplay.find(".file-size").text(_.formatFileSize(file.media.size));
+    }
+
+	return {
+		openDupeFileHandlerDialog: function (callback, callerId, firstDupe) {
+			var fuContainer = $("#" + callerId).closest(".fileupload-container");
+
+			if (dupeFileHandlerDialog.length === 0) {
+				initDialog(fuContainer, firstDupe, callback, callerId);
+			}
+			else {
+				// Display first duplicate.
+				refreshDialog(firstDupe);
+
+				// Open dialog.
+				dupeFileHandlerDialog.modal('show');
+			}
+
+			return {
+				get file() {
+					return _file;
+				},
+				set file(value) {
+					_file = value;
+					refreshDialog(value);
+				}
+			};
+		}
+	};
+})();

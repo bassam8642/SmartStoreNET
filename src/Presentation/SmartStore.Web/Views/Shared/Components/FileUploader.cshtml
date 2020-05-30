@@ -1,11 +1,13 @@
 ﻿@model FileUploader
 
+@using SmartStore.Core.Domain.Media;
 @using SmartStore.Core.Domain.Catalog;
 @using SmartStore.Services.Media;
 
 @{
 	Html.AddScriptParts("~/Content/vendors/dropzone/js/dropzone.js");
 	Html.AddScriptParts("~/Content/vendors/dropzone/js/dropzoneWrapper.js");
+	Html.AddScriptParts("~/Scripts/smartstore.media.js");
 
 	if (!Model.Name.HasValue())
 	{
@@ -16,48 +18,49 @@
 	{
 		Model.Id = Model.Name;
 	}
+
+	var mediaSettings = this.CommonServices.Resolve<MediaSettings>();
+	var maxFilesSize = mediaSettings.MaxUploadFileSize;
 }
 
-<div @Html.Attr("class", "dropzone-container", Model.Multifile)>
+<div @Html.Attr("class", "dropzone-container", Model.Multifile || !Model.HasTemplatePreview)>
 
 	<div class="dropzone-target">
-
 		<div class="fu-message">
-			@T("FileUploader.Dropzone.Message")
+			@if (Model.UploadText.HasValue())
+			{
+				@Model.UploadText
+			}
+			else
+			{
+				@T("FileUploader.Dropzone.Message")
+			}
 		</div>
 
 		<div id="@Model.Name" @Html.Attrs(Model.HtmlAttributes)
 			 data-dialog-url="@Url.Action("DupeFileHandlerDialog", "Media", new { area = "Admin" })"
 			 data-assignment-url="@Model.EntityAssignmentUrl"
 			 data-remove-url="@Model.DeleteUrl"
-			 data-entity-id="@Model.EntityId">
+			 data-sort-url="@Model.SortUrl"
+			 data-entity-id="@Model.EntityId"
+			 data-type-filter="@Model.TypeFilter">
 
-			<div class="fileupload">
-				<input type="hidden" id="@(Model.Id)-file" name="@(Model.Id)-file" />
+			<input type="hidden" id="@(Model.Id)-file" name="@(Model.Id)-file" />
 
-				<div class="fileupload-progress">
-					<!-- The global progress bar -->
-					<div class="progress">
-						<div class="progress-bar" role="progressbar" style="width: 0%" aria-valuemin="0" aria-valuemax="100"></div>
-					</div>
-				</div>
-
+			@if (Model.ShowBrowseMedia)
+			{
 				<div class="fileupload-buttons">
-
-					<input type="hidden" id="@(Model.Id)-file" name="@(Model.Id)-file" />
-
 					@{ Html.RenderWidget("file_uploader"); }
 				</div>
-			</div>
+			}
 		</div>
 
-		<a href="#" class="show-upload-summmary">
+		<a href="#" class="open-upload-summmary">
 			<i class="fa fa-question-circle"></i>
 		</a>
-
 	</div>
 
-	<button class="btn btn-secondary btn-circle btn-to-danger btn-sm remove@(Model.Compact ? " btn-sm" : "")" @Html.Attr("style", "display: none", !Model.ShowRemoveButton)>
+	<button class="btn btn-secondary btn-circle btn-to-danger btn-sm remove@(Model.Compact ? " btn-sm" : "")" @Html.Attr("style", "display: none", Model.ShowRemoveButton)>
 		<i class="far fa-times"></i>
 	</button>
 </div>
@@ -66,41 +69,47 @@
 {
 	<div class="fileupload-status">
 		<div class="fileupload-status-summary">
-			<span class="uploaded-file-count">1 Datei</span>
+			<span class="uploaded-file-count">0</span>
 			<span>von</span>
-			<span class="total-file-count">3</span>
+			<span class="total-file-count">0</span>
 			<span>hochgeladen.</span>
 		</div>
 
-		<div class="erroneous-files">
+		<div class="erroneous-files d-none">
 			<h6>Nicht hochgeladene Dateien</h6>
-			<div>
+			<div class="file-list">
 				<span>Dateiname</span>
 				<span>Grund</span>
 			</div>
 		</div>
-		<div class="updated-files">
-			<h6>Aktualisierte Dateien</h6>
-			<div>
+		<div class="skipped-files d-none">
+			<h6>Übersprungene Dateien</h6>
+			<div class="file-list">
 				<span>Dateiname</span>
 			</div>
 		</div>
-		<div class="replaced-files">
+		<div class="renamed-files d-none">
+			<h6>Umbenannte Dateien</h6>
+			<div class="file-list">
+				<span>Dateiname</span>
+			</div>
+		</div>
+		<div class="replaced-files d-none">
 			<h6>Ersetzte Dateien</h6>
-			<div>
+			<div class="file-list">
 				<span>Dateiname</span>
 			</div>
 		</div>
-		<div class="uploaded-files">
+		<div class="uploaded-files d-none">
 			<h6>Neue Dateien</h6>
-			<div>
+			<div class="file-list">
 				<span>Dateiname</span>
 			</div>
 		</div>
 	</div>
 }
 
-@if (Model.Multifile == true)
+@if (Model.Multifile)
 {
 	// TODO: find a better way!!!
 	var mediaService = EngineContext.Current.Resolve<IMediaService>();
@@ -110,7 +119,7 @@
 	<div id="@Model.PreviewContainerId" class="d-flex flex-wrap preview-container mt-3">
 		@foreach (var file in files)
 		{
-			var previewUrl = mediaService.GetUrl(file.MediaFileId, 0);
+			var previewUrl = mediaService.GetUrl(file.MediaFileId, 250);
 			var fileSize = Prettifier.BytesToString(file.MediaFile.Size);
 			var isMainPic = file.MediaFileId == Model.MainFileId;
 			var entityMediaId = 0;
@@ -121,14 +130,15 @@
 				entityMediaId = entityMediaFile.Id;
 			}
 
-			<div class="dz-processing dz-image-preview dz-success dz-complete"
+			<div class="dz-processing dz-image-preview dz-success dz-complete shadow-sm"
 				 data-display-order="@file.DisplayOrder"
-				 data-picture-id="@file.MediaFileId"
+				 data-media-id="@file.MediaFileId"
+				 data-media-name="@file.MediaFile.Name"
 				 data-toggle="tooltip"
 				 data-html="true"
 				 data-placement="top"
 				 title='<div class="text-left px-3"><em>@file.MediaFile.Name</em> <br/> <b>@fileSize</b></div>'
-				 @Html.Attr("data-entity-picture-id", entityMediaId.ToString(), entityMediaId != 0)>
+				 @Html.Attr("data-entity-media-id", entityMediaId.ToString(), entityMediaId != 0)>
 
 				@if (isMainPic)
 				{
@@ -141,7 +151,7 @@
 	</div>
 
 	<div class="file-preview-template d-none">
-		<div class="d-none dz-processing dz-image-preview dz-success dz-complete"
+		<div class="dz-processing dz-image-preview dz-success dz-complete shadow-sm"
 			 data-toggle="tooltip"
 			 data-html="true"
 			 data-placement="top"
@@ -153,7 +163,10 @@
 
 @helper FilePreviewTemplate(string previewUrl)
 {
-	<img data-dz-thumbnail @Html.Attr("src", previewUrl, previewUrl.HasValue()) />
+	<figure class="file-figure">
+		<i class="file-icon fa-fw show"></i>
+		<img data-dz-thumbnail @Html.Attr("src", previewUrl, previewUrl.HasValue()) />
+	</figure>
 
 	<div class="fu-preview-overlay"></div>
 
@@ -165,80 +178,33 @@
 			<i class="far fa-times"></i>
 		</a>
 	</div>
+
+	<div class="fileupload-progress">
+		<!-- The file progress bar -->
+		<div class="progress">
+			<div class="progress-bar" role="progressbar" style="width: 0%" aria-valuemin="0" aria-valuemax="100"></div>
+		</div>
+	</div>
 }
 
 <script data-origin="FileUploader">
     $(function () {
         var elUpload = $("#@Model.Id");
-        var fuContainer = elUpload.closest(".fileupload-container");
 
 		// Init dropzone
-		elUpload.dropzoneWrapper({
+        elUpload.dropzoneWrapper({
 			onUploading: @Html.Raw(Model.OnUploadingHandlerName.HasValue() ? Model.OnUploadingHandlerName : "null"),
 			onUploadCompleted: @Html.Raw(Model.OnUploadCompletedHandlerName.HasValue() ? Model.OnUploadCompletedHandlerName : "null"),
 			onAborted: @Html.Raw(Model.OnAbortedHandlerName.HasValue() ? Model.OnAbortedHandlerName : "null"),
 			onError: @Html.Raw(Model.OnErrorHandlerName.HasValue() ? Model.OnErrorHandlerName : "null"),
 			onFileRemove: @Html.Raw(Model.OnFileRemoveHandlerName.HasValue() ? Model.OnFileRemoveHandlerName : "null"),
             onCompleted: @Html.Raw(Model.OnCompletedHandlerName.HasValue() ? Model.OnCompletedHandlerName : "null"),
+			onMediaSelected: @Html.Raw(Model.OnMediaSelectedHandlerName.HasValue() ? Model.OnMediaSelectedHandlerName : "null"),
             maxFiles: @(Model.Multifile ? 100 : 1),
-			previewContainerId: "@(Model.Multifile ? Model.PreviewContainerId : "")"
+			maxFilesSize: @maxFilesSize,
+            previewContainerId: "@(Model.Multifile ? Model.PreviewContainerId : "")",
+            showRemoveButton: @(Model.ShowRemoveButton ? "true" : "false" ),
+			showRemoveButtonAfterUpload: @(Model.ShowRemoveButtonAfterUpload ? "true" : "false" )
         });
-
-		// The following is only relevant for multfiles.
-        if ("@(Model.Multifile)" == "True") {
-
-			var dropzone = Dropzone.forElement(fuContainer[0]);
-
-            dropzone.on("completemultiple", function (file, response, progress) {
-
-                console.log("Sorting now...");
-
-				var errorFiles = this.getFilesWithStatus(Dropzone.ERROR);
-				var dupeFiles = errorFiles.filter(file => file.response.dupe === true);
-                if (dupeFiles.length === 0) {
-					sortPictures(sortable);
-                }
-			});
-
-			// Sorting.
-			var sortable = $('.preview-container', fuContainer).sortable({
-                items: fuContainer.find('.dz-image-preview'),
-				ghostClass: 'sortable-ghost',
-                animation: 150
-			}).on('sort', function (e, ui) {
-				sortPictures($(this));
-			});
-        }
     });
-
-	function sortPictures(sortableContainer) {
-        var items = sortableContainer.find('.dz-image-preview');
-
-		var newOrder = [];
-		$.each(items, function (i, val) {
-			newOrder.push($(val).data('entity-picture-id'));
-		});
-
-		// Set display order of ProductPicture.
-		$.ajax({
-			async: false,
-			cache: false,
-			type: 'POST',
-			url: '@Model.SortUrl',
-            data: {
-                pictures: newOrder.join(","),
-				entityId: @Model.EntityId,
-            },
-            success: function (response) {
-				// Set EntityMediaId & current DisplayOrder
-                $.each(response.response, function (index, value) {
-                    var preview = $(".dz-image-preview[data-picture-id='" + value.MediaFileId + "']");
-
-                    preview.attr("data-display-order", value.DisplayOrder);
-					preview.attr("data-entity-picture-id", value.EntityMediaId);
-				});
-            }
-		});
-    }
-
 </script>

@@ -103,7 +103,7 @@ namespace SmartStore.Web.Controllers
         [NonAction]
         protected PictureModel PrepareBlogPostPictureModel(BlogPost blogPost, int? fileId)
         {
-            var file = _mediaService.GetFileById(fileId ?? 0);
+            var file = _mediaService.GetFileById(fileId ?? 0, MediaLoadFlags.AsNoTracking);
 
             var pictureModel = new PictureModel
             {
@@ -114,7 +114,8 @@ namespace SmartStore.Web.Controllers
                 FullSizeImageWidth = file?.Dimensions.Width,
                 FullSizeImageHeight = file?.Dimensions.Height,
                 Title = blogPost.Title,
-                AlternateText = blogPost.Title
+                AlternateText = blogPost.Title,
+                File = file
             };
 
             return pictureModel;

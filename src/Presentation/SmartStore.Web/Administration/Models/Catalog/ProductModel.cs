@@ -13,6 +13,7 @@ using SmartStore.Web.Framework;
 using SmartStore.Web.Framework.Localization;
 using SmartStore.Web.Framework.Modelling;
 using SmartStore.Core.Localization;
+using SmartStore.Core.Domain.Media;
 
 namespace SmartStore.Admin.Models.Catalog
 {
@@ -164,8 +165,10 @@ namespace SmartStore.Admin.Models.Catalog
         [SmartResourceDisplayName("Admin.Catalog.Products.Fields.Download")]
 		[UIHint("Download")]
 		public int? DownloadId { get; set; }
+		public string DownloadThumbUrl { get; set; }
+		public Download CurrentDownload { get; set; }
 
-        [SmartResourceDisplayName("Common.Download.Version")]
+		[SmartResourceDisplayName("Common.Download.Version")]
         public string DownloadFileVersion { get; set; }
 
         [SmartResourceDisplayName("Admin.Catalog.Products.Fields.UnlimitedDownloads")]
@@ -460,7 +463,7 @@ namespace SmartStore.Admin.Models.Catalog
         {
             public int ProductId { get; set; }
 
-            [UIHint("Media"), AdditionalMetadata("album", "product")]
+            [UIHint("Media"), AdditionalMetadata("album", "catalog")]
             [SmartResourceDisplayName("Admin.Catalog.Products.Pictures.Fields.Picture")]
             public int PictureId { get; set; }
 
@@ -698,7 +701,7 @@ namespace SmartStore.Admin.Models.Catalog
 			public string Color { get; set; }
 			public bool IsListTypeAttribute { get; set; }
 
-            [UIHint("Media"), AdditionalMetadata("album", "product")]
+            [UIHint("Media"), AdditionalMetadata("album", "catalog")]
             [SmartResourceDisplayName("Admin.Catalog.Products.ProductVariantAttributes.Attributes.Values.Fields.Picture")]
             public int PictureId { get; set; }
             
@@ -828,7 +831,17 @@ namespace SmartStore.Admin.Models.Catalog
                 .NotNull()  // Nullable required for IsTaxExempt.
                 .NotEqual(0)
                 .When(x => !x.IsTaxExempt);
-        }
+
+			RuleFor(x => x.DownloadFileVersion)
+				.NotEmpty()
+				.When(x => x.DownloadId != null && x.DownloadId != 0)
+				.WithMessage(T("Admin.Catalog.Products.Download.SemanticVersion.NotValid"));
+
+			RuleFor(x => x.NewVersion)
+				.NotEmpty()
+				.When(x => x.NewVersionDownloadId != null && x.NewVersionDownloadId != 0)
+				.WithMessage(T("Admin.Catalog.Products.Download.SemanticVersion.NotValid"));
+		}
     }
 
 	public partial class ProductVariantAttributeValueModelValidator : AbstractValidator<ProductModel.ProductVariantAttributeValueModel>

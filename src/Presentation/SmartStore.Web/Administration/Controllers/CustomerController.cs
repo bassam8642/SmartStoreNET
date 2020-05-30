@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Web.Mvc;
@@ -510,19 +509,6 @@ namespace SmartStore.Admin.Controllers
         [Permission(Permissions.Customer.Create)]
         public ActionResult Create(CustomerModel model, bool continueEditing, FormCollection form)
         {
-            /// Validate unique user. <see cref="ICustomerRegistrationService.RegisterCustomer(CustomerRegistrationRequest)"/>
-            if (model.Email.HasValue() && _customerService.GetCustomerByEmail(model.Email) != null)
-            {
-                ModelState.AddModelError("", T("Account.Register.Errors.EmailAlreadyExists"));
-            }
-
-            if (model.Username.HasValue() &&
-                _customerSettings.CustomerLoginType != CustomerLoginType.Email &&
-                _customerService.GetCustomerByUsername(model.Username) != null)
-            {
-                ModelState.AddModelError("", T("Account.Register.Errors.UsernameAlreadyExists"));
-            }
-
             // Validate customer roles.
             var allowManagingCustomerRoles = Services.Permissions.Authorize(Permissions.Customer.EditRole);
             var allCustomerRoles = _customerService.GetAllCustomerRoles(true);
@@ -588,55 +574,65 @@ namespace SmartStore.Admin.Controllers
                     }
                 }
 
-                _customerService.InsertCustomer(customer);
+                try
+                {
+                    _customerService.InsertCustomer(customer);
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                }
 
                 // Form fields.
-                if (_dateTimeSettings.AllowCustomersToSetTimeZone)
-                    customer.TimeZoneId = model.TimeZoneId;
-                if (_customerSettings.GenderEnabled)
-                    customer.Gender = model.Gender;
-                if (_customerSettings.StreetAddressEnabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.StreetAddress, model.StreetAddress);
-                if (_customerSettings.StreetAddress2Enabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.StreetAddress2, model.StreetAddress2);
-                if (_customerSettings.ZipPostalCodeEnabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.ZipPostalCode, model.ZipPostalCode);
-                if (_customerSettings.CityEnabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.City, model.City);
-                if (_customerSettings.CountryEnabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.CountryId, model.CountryId);
-                if (_customerSettings.CountryEnabled && _customerSettings.StateProvinceEnabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.StateProvinceId, model.StateProvinceId);
-                if (_customerSettings.PhoneEnabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.Phone, model.Phone);
-                if (_customerSettings.FaxEnabled)
-                    _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.Fax, model.Fax);
-
-                // Password.
-                if (model.Password.HasValue())
+                if (ModelState.IsValid)
                 {
-                    var changePassRequest = new ChangePasswordRequest(model.Email, false, _customerSettings.DefaultPasswordFormat, model.Password);
-                    var changePassResult = _customerRegistrationService.ChangePassword(changePassRequest);
-                    if (!changePassResult.Success)
+                    if (_dateTimeSettings.AllowCustomersToSetTimeZone)
+                        customer.TimeZoneId = model.TimeZoneId;
+                    if (_customerSettings.GenderEnabled)
+                        customer.Gender = model.Gender;
+                    if (_customerSettings.StreetAddressEnabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.StreetAddress, model.StreetAddress);
+                    if (_customerSettings.StreetAddress2Enabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.StreetAddress2, model.StreetAddress2);
+                    if (_customerSettings.ZipPostalCodeEnabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.ZipPostalCode, model.ZipPostalCode);
+                    if (_customerSettings.CityEnabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.City, model.City);
+                    if (_customerSettings.CountryEnabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.CountryId, model.CountryId);
+                    if (_customerSettings.CountryEnabled && _customerSettings.StateProvinceEnabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.StateProvinceId, model.StateProvinceId);
+                    if (_customerSettings.PhoneEnabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.Phone, model.Phone);
+                    if (_customerSettings.FaxEnabled)
+                        _genericAttributeService.SaveAttribute(customer, SystemCustomerAttributeNames.Fax, model.Fax);
+
+                    // Password.
+                    if (model.Password.HasValue())
                     {
-                        foreach (var changePassError in changePassResult.Errors)
+                        var changePassRequest = new ChangePasswordRequest(model.Email, false, _customerSettings.DefaultPasswordFormat, model.Password);
+                        var changePassResult = _customerRegistrationService.ChangePassword(changePassRequest);
+                        if (!changePassResult.Success)
                         {
-                            NotifyError(changePassError);
+                            foreach (var changePassError in changePassResult.Errors)
+                            {
+                                NotifyError(changePassError);
+                            }
                         }
                     }
+
+                    // Customer roles.
+                    if (allowManagingCustomerRoles)
+                    {
+                        newCustomerRoles.Each(x => _customerService.InsertCustomerRoleMapping(new CustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = x.Id }));
+                    }
+
+                    Services.EventPublisher.Publish(new ModelBoundEvent(model, customer, form));
+                    Services.CustomerActivity.InsertActivity("AddNewCustomer", T("ActivityLog.AddNewCustomer"), customer.Id);
+
+                    NotifySuccess(T("Admin.Customers.Customers.Added"));
+                    return continueEditing ? RedirectToAction("Edit", new { id = customer.Id }) : RedirectToAction("List");
                 }
-
-                // Customer roles.
-                if (allowManagingCustomerRoles)
-                {
-                    newCustomerRoles.Each(x => _customerService.InsertCustomerRoleMapping(new CustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = x.Id }));
-                }
-
-                Services.EventPublisher.Publish(new ModelBoundEvent(model, customer, form));
-                Services.CustomerActivity.InsertActivity("AddNewCustomer", T("ActivityLog.AddNewCustomer"), customer.Id);
-
-                NotifySuccess(T("Admin.Customers.Customers.Added"));
-                return continueEditing ? RedirectToAction("Edit", new { id = customer.Id }) : RedirectToAction("List");
             }
 
             // If we got this far, something failed, redisplay form.
@@ -1379,17 +1375,11 @@ namespace SmartStore.Admin.Controllers
         [Permission(Permissions.Customer.Read, false)]
         public ActionResult TopCustomersDashboardReport()
         {
-            var watch = new Stopwatch();
-            watch.Start();
-
             var model = new TopCustomersDashboardReportModel
             {
                 TopCustomersByAmount = CreateCustomerReportLineModel(_customerReportService.GetTopCustomersReport(null, null, null, null, null, 1, 7)),
                 TopCustomersByQuantity = CreateCustomerReportLineModel(_customerReportService.GetTopCustomersReport(null, null, null, null, null, 2, 7))
             };
-
-            watch.Stop();
-            Debug.WriteLine("TopCustomersDashboardReport >>> " + watch.ElapsedMilliseconds);
 
             return PartialView(model);
         }
@@ -1402,7 +1392,11 @@ namespace SmartStore.Admin.Controllers
             return PartialView(model);
         }
 
-
+        /// <summary>
+        /// Sorts customer registration dataPoint into customer chart report accordingly to period 
+        /// </summary>
+        /// <param name="reports">Registrations chart report</param>
+        /// <param name="dataPoint">Current registration data</param>
         [NonAction]
         public void SetCustomerReportData(List<DashboardChartReportModel> reports, DateTime dataPoint)
         {
@@ -1474,11 +1468,12 @@ namespace SmartStore.Admin.Controllers
             }
         }
 
+        /// <summary>
+        /// Evaluates and displays customer registrations of this year as line chart
+        /// </summary>
+        /// <returns>Customers registrations chart</returns>
         public ActionResult RegisteredCustomersDashboardReport()
         {
-            var watch = new Stopwatch();
-            watch.Start();
-
             // Get customers of at least last 28 days (if year is younger)
             var beginningOfYear = new DateTime(DateTime.UtcNow.Year, 1, 1);
             var startDate = (DateTime.UtcNow.Date - beginningOfYear).Days < 28 ? DateTime.UtcNow.AddDays(-27).Date : beginningOfYear;
@@ -1504,6 +1499,7 @@ namespace SmartStore.Admin.Controllers
                 new DashboardChartReportModel(1, 12)
             };
 
+            // Sort data for chart display
             foreach (var dataPoint in customerDates)
             {
                 SetCustomerReportData(model, _dateTimeHelper.ConvertToUserTime(dataPoint, DateTimeKind.Utc));
@@ -1557,14 +1553,14 @@ namespace SmartStore.Admin.Controllers
             {
                 // Get registration count for day before
                 model[1].TotalAmount,
-                customerDates.Where(
-                    x => x >= DateTime.UtcNow.Date.AddDays(-2) && x < DateTime.UtcNow.Date.AddDays(-1))
-                .Count(),
+                customerDates.Where( x =>
+                    x >= DateTime.UtcNow.Date.AddDays(-2) && x < DateTime.UtcNow.Date.AddDays(-1)
+                ).Count(),
 
                 // Get registration count for week before
-                customerDates.Where(
-                    x => x >= DateTime.UtcNow.Date.AddDays(-14) && x < DateTime.UtcNow.Date.AddDays(-7))
-                .Count(),
+                customerDates.Where( x =>
+                    x >= DateTime.UtcNow.Date.AddDays(-14) && x < DateTime.UtcNow.Date.AddDays(-7)
+                ).Count(),
 
                 // Get registration count for month before
                 _customerReportService.GetCustomerRegistrations(beginningOfYear.AddDays(-56), DateTime.UtcNow.Date.AddDays(-28)),
@@ -1576,12 +1572,10 @@ namespace SmartStore.Admin.Controllers
             // Format percentage value
             for (int i = 0; i < model.Count; i++)
             {
-                model[i].PercentageDelta = model[i].TotalAmount <= 0 ?
-                    0 : sumBefore[i] <= 0 ? 100 : (int)Math.Round(model[i].TotalAmount / sumBefore[i] * 100 - 100);
+                model[i].PercentageDelta = model[i].TotalAmount <= 0 ? 0
+                    : sumBefore[i] <= 0 ? 100
+                    : (int)Math.Round(model[i].TotalAmount / sumBefore[i] * 100 - 100);
             }
-
-            watch.Stop();
-            Debug.WriteLine("RegistredCustomersDashboardReport >>> " + watch.ElapsedMilliseconds);
 
             return PartialView(model);
         }

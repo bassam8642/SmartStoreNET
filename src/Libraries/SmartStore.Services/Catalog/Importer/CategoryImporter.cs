@@ -201,7 +201,7 @@ namespace SmartStore.Services.Catalog.Importer
                             if ((stream?.Length ?? 0) > 0)
                             {
                                 var currentFiles = new List<MediaFileInfo>();
-                                var file = _mediaService.GetFileById(row.Entity.MediaFileId ?? 0, MediaLoadFlags.AsNoTracking | MediaLoadFlags.WithBlob);
+                                var file = _mediaService.GetFileById(row.Entity.MediaFileId ?? 0, MediaLoadFlags.AsNoTracking);
                                 if (file != null)
                                 {
                                     currentFiles.Add(file);
@@ -209,7 +209,7 @@ namespace SmartStore.Services.Catalog.Importer
 
                                 if (!_mediaService.FindEqualFile(stream, currentFiles.Select(x => x.File), true, out var _))
                                 {
-                                    var path = _mediaService.CombinePaths(SystemAlbumProvider.Categories, image.FileName.ToValidFileName());
+                                    var path = _mediaService.CombinePaths(SystemAlbumProvider.Catalog, image.FileName.ToValidFileName());
                                     var newFile = _mediaService.SaveFile(path, stream, false, DuplicateFileHandling.Rename);
                                     if ((newFile?.Id ?? 0) != 0)
                                     {

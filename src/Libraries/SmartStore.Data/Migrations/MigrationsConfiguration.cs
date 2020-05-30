@@ -546,6 +546,7 @@
 
             builder.AddOrUpdate("Admin.Media.Album.Message", "Messages", "Nachrichten");
             builder.AddOrUpdate("Admin.Media.Album.File", "Files", "Dateien");
+            builder.AddOrUpdate("Admin.Media.Album.Content", "Content", "Inhalte");
 
             builder.AddOrUpdate("Admin.SalesReport.LatestOrders", "Latest orders", "Neueste Bestellungen");
             builder.AddOrUpdate("Admin.SalesReport.TopCustomers", "Top customers", "Top Kunden");
@@ -603,31 +604,28 @@
             builder.AddOrUpdate("Admin.Orders.Overall", "Orders overall", "Aufträge insgesamt");
             builder.AddOrUpdate("Admin.Report.Registrations", "Registrations", "Registrierungen");
 
-
-            builder.AddOrUpdate("FileUploader.Dropzone.Message",
-                "To upload files drop them here or click.",
-                "Zum Hochladen Dateien hier ablegen oder klicken.");
-            
+            builder.AddOrUpdate("Common.FileUploader.Upload", "To upload files drop them here or click.", "Zum Hochladen Dateien hier ablegen oder klicken.");
+            builder.AddOrUpdate("FileUploader.Dropzone.Message", "To upload files drop them here or click.", "Zum Hochladen Dateien hier ablegen oder klicken.");
             builder.AddOrUpdate("FileUploader.MultiFiles.MainMediaFile", "Main media file", "Hauptbild");
+            builder.AddOrUpdate("FileUploader.Preview.SetMainMedia.Title", "Set as main picture", "Zum Hauptbild machen");
+            builder.AddOrUpdate("FileUploader.Preview.DeleteEntityMedia.Title", "Remove assignment", "Zuordnung entfernen");
+
+            builder.AddOrUpdate("FileUploader.StatusWindow.Uploading.File", "file is uploading", "Datei wird hochgeladen");
+            builder.AddOrUpdate("FileUploader.StatusWindow.Uploading.Files", "files are uploading", "Dateien werden hochgeladen");
+            builder.AddOrUpdate("FileUploader.StatusWindow.Complete.File", "upload complete", "Upload abgeschloßen");
+            builder.AddOrUpdate("FileUploader.StatusWindow.Complete.Files", "uploads complete", "Uploads abgeschloßen");
+            builder.AddOrUpdate("FileUploader.StatusWindow.Canceled.File", "upload canceled", "Upload abgebrochen");
+            builder.AddOrUpdate("FileUploader.StatusWindow.Canceled.Files", "uploads canceled", "Uploads abgebrochen");
+            builder.AddOrUpdate("FileUploader.StatusWindow.Collapse.Title", "Minimize", "Minimieren");
 
             builder.AddOrUpdate("FileUploader.DuplicateDialog.Title", "Replace or skip", "Ersetzen oder überspringen");
-            
-            builder.AddOrUpdate("FileUploader.DuplicateDialog.Intro",
-                "The files you selected already exist. Please decide how existing files should be handled.", 
-                "Eine der von Ihnen ausgewählten Dateien ist bereits vorhanden. Bitte entscheiden Sie, wie mit vorhandenen Dateien verfahren werden soll.");
-
+            builder.AddOrUpdate("FileUploader.DuplicateDialog.Intro", "The file <span class='current-file'></span> already exists.", "Die Datei <span class='current-file'></span> ist bereits vorhanden.");
             builder.AddOrUpdate("FileUploader.DuplicateDialog.DupeFile.Title", "Uploaded file", "Hochgeladene Datei");
             builder.AddOrUpdate("FileUploader.DuplicateDialog.ExistingFile.Title", "Existing files", "Existierende Datei");
             builder.AddOrUpdate("FileUploader.DuplicateDialog.Option.Skip", "Skip file", "Datei überspringen");
             builder.AddOrUpdate("FileUploader.DuplicateDialog.Option.Replace", "Upload and replace", "Hochladen und ersetzen");
             builder.AddOrUpdate("FileUploader.DuplicateDialog.Option.Rename", "Upload and rename", "Hochladen und umbenennen");
-            builder.AddOrUpdate("FileUploader.DuplicateDialog.Option.SaveSelection",
-                "Remember this selection and apply it to the current queue.",
-                "Diese Auswahl merken und auf die aktuelle Wartenschlange anwenden.");
-
-            builder.AddOrUpdate("FileUploader.DuplicateDialog.Btn.Skip", "Skip file", "Datei überspringen");
-            builder.AddOrUpdate("FileUploader.DuplicateDialog.Btn.Replace", "Replace file", "Datei ersetzen");
-            builder.AddOrUpdate("FileUploader.DuplicateDialog.Btn.Rename", "Rename file", "Datei umbenennen");
+            builder.AddOrUpdate("FileUploader.DuplicateDialog.Option.SaveSelection", "Remember this selection and apply it to the current queue.", "Diese Auswahl merken und auf die aktuelle Wartenschlange anwenden.");
 
             builder.AddOrUpdate("FileUploader.Dropzone.DictDefaultMessage", "Drop files here to upload", "Dateien zum Hochladen hier ablegen");
             builder.AddOrUpdate("FileUploader.Dropzone.DictFallbackMessage", "Your browser does not support drag'n'drop file uploads.", "Ihr Browser unterstützt keine Datei-Uploads per Drag'n'Drop.");
@@ -641,9 +639,95 @@
             builder.AddOrUpdate("FileUploader.Dropzone.DictRemoveFile", "Remove file", "Datei entfernen");
             builder.AddOrUpdate("FileUploader.Dropzone.DictMaxFilesExceeded", "You can not upload any more files.", "Sie können keine weiteren Dateien hochladen.");
 
-            builder.AddOrUpdate("FileUploader.Preview.SetMainMedia.Title", "Set as main picture", "Zum Hauptbild machen");
-            builder.AddOrUpdate("FileUploader.Preview.DeleteEntityMedia.Title", "Remove assignment", "Zuordnung entfernen");
+            builder.AddOrUpdate("Admin.Catalog.Products.ProductPictures.Delete.Success", "The assignment was successfully removed.", "Die Zuordnung wurde erfolgreich entfernt.");
+            builder.AddOrUpdate("Admin.Catalog.Products.ProductPictures.Sort.Success", "The new order of your product images has been saved successfully.", "Die neue Anordnung Ihrer Produktbilder wurde erfolgreich gespeichert.");
 
+            builder.AddOrUpdate("Common.Entity.Customer", "Customer", "Kunde");
+            builder.AddOrUpdate("Common.Entity.ProductAttributeOption", "Product attribute options set", "Produktattribut-Options-Set");
+            builder.AddOrUpdate("Common.Entity.ProductVariantAttributeValue", "Product attribute option", "Produktattribut-Option");
+            builder.AddOrUpdate("Common.Entity.SpecificationAttributeOption", "Specification attribute option", "Spezifikationsattribut-Option");
+            builder.AddOrUpdate("Common.Entity.BlogPost", "Blog post", "Blog-Eintrag");
+            builder.AddOrUpdate("Common.Entity.NewsItem", "News item", "News");
+            builder.AddOrUpdate("Common.Entity.Download", "Download", "Download");
+            builder.AddOrUpdate("Common.Entity.MessageTemplate", "Message template", "Nachrichtenvorlage");
+            
+            builder.AddOrUpdate("Common.Download.Version.Hint", "Enter the version number in the correct format (e.g.: 1.0.0.0, 2.0 or 3.1.5).", "Geben Sie die Versionsnummer in korrektem Format an (z.B.: 1.0.0.0, 2.0 oder 3.1.5).");
+            builder.AddOrUpdate("Common.Download.Version.Placeholder", "e.g.: 1.0.0.0, 2.0 or 3.1.5", "z.B.: 1.0.0.0, 2.0 oder 3.1.5");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.MaxUploadFileSize",
+                "Maximum file size",
+                "Maximale Dateigröße",
+                "Specifies the maximum file size of an upload (in KB). The default is 102,400 (100 MB).",
+                "Legt die maximale Dateigröße eines Uploads in KB fest. Der Standardwert ist 102.400 (100 MB).");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapEnabled",
+                "Enable XML Sitemap",
+                "XML-Sitemap aktivieren",
+                "The XML sitemap contains URLs to store pages which can be automatically read and indexed by search engines like Google or Bing.",
+                "Die XML-Sitemap enthält URLs zu Shop-Seiten, welche von Suchmaschinen wie Google oder Bing automatisch gelesen und indiziert werden können.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapIncludesBlog",
+                "Include blog posts",
+                "Blog-Einträge einbeziehen",
+                "Adds blog pages to sitemap.",
+                "Fügt Blog-Seiten zur Sitemap hinzu.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapIncludesCategories",
+                "Include categories",
+                "Warengruppen einbeziehen",
+                "Adds category pages to sitemap.",
+                "Fügt Warengruppen-Seiten zur Sitemap hinzu.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapIncludesForum",
+                "Include forums",
+                "Foren einbeziehen",
+                "Adds forum pages to sitemap.",
+                "Fügt Forum-Seiten zur Sitemap hinzu.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapIncludesManufacturers",
+                "Include brands",
+                "Hersteller einbeziehen",
+                "Adds brand pages to sitemap.",
+                "Fügt Hersteller-Seiten zur Sitemap hinzu.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapIncludesNews",
+                "Include news",
+                "News einbeziehen",
+                "Adds news pages to sitemap.",
+                "Fügt News-Seiten zur Sitemap hinzu.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapIncludesProducts",
+                "Include products",
+                "Produkte einbeziehen",
+                "Adds product pages to sitemap.",
+                "Fügt Produkt-Seiten zur Sitemap hinzu.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.GeneralCommon.XmlSitemapIncludesTopics",
+                "Include topics",
+                "Seiten einbeziehen",
+                "Adds topic pages to sitemap.",
+                "Fügt Inhalts-Seiten zur Sitemap hinzu.");
+
+            builder.AddOrUpdate("Admin.System.XMLSitemap", "XML Sitemap", "XML-Sitemap");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.MakeFilesTransientWhenOrphaned",
+                "Automatically delete orphaned files",
+                "Verwaiste Dateien automatisch löschen",
+                "Specifies whether orphaned media files should be automatically deleted during the next cleanup operation.",
+                "Legt fest, ob verwaiste Mediendateien beim nächsten Aufräumvorgang automatisch gelöscht werden sollen.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.MediaTypes", "Media types", "Medientypen");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.MediaTypesNotes",
+                "Media types control which files can be uploaded. All other media types are generally rejected. Please enter types separated by spaces and without dots.",
+                "Medientypen steuern, welche Dateien hochgeladen werden können. Alle anderen Medientypen werden grundsätzlich abgelehnt. Die Typen bitte Leerzeichen getrennt und ohne Punkt angeben.");
+
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.Type.Image", "Image", "Bild");
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.Type.Video", "Video", "Video");
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.Type.Audio", "Audio", "Audio");
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.Type.Document", "Document", "Dokument");
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.Type.Text", "Text", "Text");
+            builder.AddOrUpdate("Admin.Configuration.Settings.Media.Type.Bin", "Other", "Sonstige");
         }
     }
 }

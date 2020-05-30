@@ -224,7 +224,7 @@ namespace SmartStore.Web.Controllers
                     var fileIds = combination.GetAssignedMediaIds();
                     if (fileIds?.Any() ?? false)
                     {
-                        file = _mediaService.GetFileById(fileIds[0]);
+                        file = _mediaService.GetFileById(fileIds[0], MediaLoadFlags.AsNoTracking);
                     }
                 }
 
@@ -250,7 +250,8 @@ namespace SmartStore.Web.Controllers
                     Size = pictureSize,
                     ImageUrl = _mediaService.GetUrl(file, pictureSize, null, !_catalogSettings.HideProductDefaultPictures),
                     Title = T("Media.Product.ImageLinkTitleFormat", productName),
-                    AlternateText = T("Media.Product.ImageAlternateTextFormat", productName)
+                    AlternateText = T("Media.Product.ImageAlternateTextFormat", productName),
+                    File = file
                 };
 
                 return pm;

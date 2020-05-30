@@ -274,7 +274,7 @@ namespace SmartStore.Admin.Controllers
             var p = product;
             var m = model;
 
-            p.IsDownload = m.IsDownload;
+			p.IsDownload = m.IsDownload;
             //p.DownloadId = m.DownloadId ?? 0;
             p.UnlimitedDownloads = m.UnlimitedDownloads;
             p.MaxNumberOfDownloads = m.MaxNumberOfDownloads;
@@ -300,7 +300,7 @@ namespace SmartStore.Admin.Controllers
                 var download = _downloadService.GetDownloadsFor(p).FirstOrDefault();
                 if (download != null)
                 {
-                    download.FileVersion = new SemanticVersion(m.DownloadFileVersion).ToString();
+                    download.FileVersion = m.DownloadFileVersion;
                     download.EntityId = p.Id;
                     download.IsTransient = false;
 
@@ -543,20 +543,29 @@ namespace SmartStore.Admin.Controllers
 					model.ProductUrl = Url.RouteUrl("Product", new { SeName = product.GetSeName() }, Request.Url.Scheme);
 				}
 
-                // Downloads.
-                model.DownloadVersions = _downloadService.GetDownloadsFor(product)
-                    .Select(x => new DownloadVersion
+				// Downloads.
+				var productDownloads = _downloadService.GetDownloadsFor(product);
+
+				model.DownloadVersions = productDownloads
+					.Select(x => new DownloadVersion
                     {
                         FileVersion = x.FileVersion,
                         DownloadId = x.Id,
-                        FileName = x.MediaFile?.Name,
-                        DownloadUrl = Url.Action("DownloadFile", "Download", new { downloadId = x.Id })
+                        FileName = x.UseDownloadUrl ? x.DownloadUrl : x.MediaFile?.Name,
+                        DownloadUrl = x.UseDownloadUrl ? x.DownloadUrl : Url.Action("DownloadFile", "Download", new { downloadId = x.Id })
                     })
-                    .ToList();
+					.ToList();
 
-                var currentDownload = _downloadService.GetDownloadsFor(product).FirstOrDefault();
+                var currentDownload = productDownloads.FirstOrDefault();
 
                 model.DownloadId = currentDownload?.Id;
+				model.CurrentDownload = currentDownload;
+				if (currentDownload != null && currentDownload.MediaFile != null)
+				{
+					model.DownloadThumbUrl = _mediaService.GetUrl(currentDownload.MediaFile.Id, _mediaSettings.CartThumbPictureSize, null, true);
+					currentDownload.DownloadUrl = Url.Action("DownloadFile", "Download", new { downloadId = currentDownload.Id });
+				}
+				
                 model.DownloadFileVersion = (currentDownload?.FileVersion).EmptyNull();
 
                 // Media files.
@@ -1236,9 +1245,21 @@ namespace SmartStore.Admin.Controllers
                 {
                     ModelState.AddModelError("FileVersion", T("Admin.Catalog.Products.Download.SemanticVersion.NotValid"));
                 }
-            } 
+            }
 
-            if (ModelState.IsValid)
+			if (model.NewVersion.HasValue() && model.NewVersionDownloadId != null)
+			{
+				try
+				{
+					var test = new SemanticVersion(model.NewVersion).ToString();
+				}
+				catch
+				{
+					ModelState.AddModelError("FileVersion", T("Admin.Catalog.Products.Download.SemanticVersion.NotValid"));
+				}
+			}
+
+			if (ModelState.IsValid)
             {
 				MapModelToProduct(model, product, form, out var nameChanged);
 				UpdateDataOfExistingProduct(product, model, true, nameChanged);
@@ -1250,6 +1271,24 @@ namespace SmartStore.Admin.Controllers
                 NotifySuccess(T("Admin.Catalog.Products.Updated"));
                 return continueEditing ? RedirectToAction("Edit", new { id = product.Id }) : RedirectToAction("List");
             }
+			else
+			{
+				// Remove uploaded Download
+				if (model.DownloadId != null)
+				{
+					var currentDownload = _downloadService.GetDownloadById((int)model.DownloadId);
+					_downloadService.DeleteDownload(currentDownload);
+				}
+				else if (model.NewVersionDownloadId != null)
+				{
+					var currentDownload = _downloadService.GetDownloadById((int)model.NewVersionDownloadId);
+					_downloadService.DeleteDownload(currentDownload);
+				}
+				else if (model.SampleDownloadId != null) {
+					var currentDownload = _downloadService.GetDownloadById((int)model.SampleDownloadId);
+					_downloadService.DeleteDownload(currentDownload);
+				}
+			}
 
             // If we got this far, something failed, redisplay form.
 			PrepareProductModel(model, product, false, true);
@@ -2148,25 +2187,6 @@ namespace SmartStore.Admin.Controllers
 		#region Product pictures
 
 		[HttpPost]
-		public ActionResult SetMainPictureId(int pictureId, int productId)
-		{
-			try
-			{
-				var product = _productService.GetProductById(productId);
-				product.MainPictureId = pictureId;
-				_productService.UpdateProduct(product);
-			}
-			catch (Exception ex)
-			{
-				NotifyError(ex.Message);
-				return new HttpStatusCodeResult(501, ex.Message);
-			}
-
-			NotifySuccess(T("Admin.Common.DataSuccessfullySaved"));
-			return new HttpStatusCodeResult(200);
-		}
-
-		[HttpPost]
 		public ActionResult SortPictures(string pictures, int entityId)
 		{
 			var response = new List<dynamic>();
@@ -2209,47 +2229,11 @@ namespace SmartStore.Admin.Controllers
 				return new HttpStatusCodeResult(501, ex.Message);
 			}
 
-			NotifySuccess(T("Admin.Common.DataSuccessfullySaved"));
+			NotifySuccess(T("Admin.Catalog.Products.ProductPictures.Sort.Success"));
 			//return new HttpStatusCodeResult(200);
 
 			return Json(new { success = true, response }, JsonRequestBehavior.AllowGet);
 		}
-
-		[HttpPost]
-		[Permission(Permissions.Catalog.Product.EditPicture)]
-        public ActionResult ProductPictureAdd(int mediaFileId, int displayOrder, int entityId)
-        {
-            if (mediaFileId == 0)
-            {
-                throw new ArgumentException("Missing picture identifier.");
-            }
-
-			var success = false;
-            var product = _productService.GetProductById(entityId);
-            if (product == null)
-            {
-                throw new ArgumentException(T("Products.NotFound", entityId));
-            }
-
-			var currentPic = product.ProductPictures.Where(x => x.MediaFileId == mediaFileId).FirstOrDefault();
-
-			// No duplicate assignments!
-			if (currentPic == null)
-			{
-				var productPicture = new ProductMediaFile
-				{
-					MediaFileId = mediaFileId,
-					ProductId = entityId,
-					DisplayOrder = displayOrder
-				};
-
-				_productService.InsertProductPicture(productPicture);
-
-				success = true;
-			}
-			
-            return Json(new { success , message = T("Admin.Product.Picture.Added").JsText.ToString() }, JsonRequestBehavior.AllowGet);
-        }
 
 		[HttpPost]
 		[Permission(Permissions.Catalog.Product.EditPicture)]
@@ -2267,38 +2251,33 @@ namespace SmartStore.Admin.Controllers
 				throw new ArgumentException(T("Products.NotFound", entityId));
 			}
 
-			var ids = mediaFileIds.SplitSafe(",");
+			var ids = mediaFileIds.ToIntArray();
 			var response = new List<dynamic>();
+			var existingFiles = product.ProductPictures.Select(x => x.MediaFileId).ToList();
 
 			foreach (var id in ids)
 			{
-				// Should never happen
-				if (id.IsCaseInsensitiveEqual("undefined"))
-					continue;
-
-				var mediaFileId = Convert.ToInt32(id);
-				var currentPic = product.ProductPictures.Where(x => x.MediaFileId == mediaFileId).FirstOrDefault();
+				var exists = existingFiles.Contains(id);
 
 				// No duplicate assignments!
-				if (currentPic == null)
+				if (!exists)
 				{
 					var productPicture = new ProductMediaFile
 					{
-						MediaFileId = mediaFileId,
+						MediaFileId = id,
 						ProductId = entityId
 					};
 
-					// TODO: Performance!!! Insert in one request.
 					_productService.InsertProductPicture(productPicture);
 
 					// TODO: PERF!!!
-					var media = _mediaService.GetFileById(mediaFileId);
+					var media = _mediaService.GetFileById(id, MediaLoadFlags.AsNoTracking);
 
 					success = true;
 
 					dynamic respObj = new
 					{
-						MediaFileId = mediaFileId,
+						MediaFileId = id,
 						ProductMediaFileId = productPicture.Id,
 						Name = media.Name
 					};
@@ -2310,62 +2289,6 @@ namespace SmartStore.Admin.Controllers
 			return Json(new { success, response, message = T("Admin.Product.Picture.Added").JsText.ToString() }, JsonRequestBehavior.AllowGet);
 		}
 
-		[HttpPost, GridAction(EnableCustomBinding = true)]
-        [Permission(Permissions.Catalog.Product.Read)]
-        public ActionResult ProductPictureList(GridCommand command, int productId)
-        {
-			var model = new GridModel<ProductModel.ProductPictureModel>();
-			var files = _productService.GetProductPicturesByProductId(productId);
-
-			var productPicturesModel = files
-				.Select(x =>
-				{
-					var pictureModel = new ProductModel.ProductPictureModel
-					{
-						Id = x.Id,
-						ProductId = x.ProductId,
-						PictureId = x.MediaFileId,
-						DisplayOrder = x.DisplayOrder
-					};
-
-                    try
-                    {
-                        pictureModel.PictureUrl = _mediaService.GetUrl(x.MediaFile, 0);
-                    }
-                    catch (Exception ex)
-                    {
-                        // The user must always have the possibility to delete faulty images.
-                        Logger.Error(ex);
-                    }
-
-                    return pictureModel;
-				})
-				.ToList();
-
-			model.Data = productPicturesModel;
-			model.Total = productPicturesModel.Count;
-
-            return new JsonResult
-            {
-                Data = model
-            };
-        }
-
-        [GridAction(EnableCustomBinding = true)]
-        [Permission(Permissions.Catalog.Product.EditPicture)]
-        public ActionResult ProductPictureUpdate(ProductModel.ProductPictureModel model, GridCommand command)
-        {
-			var productPicture = _productService.GetProductPictureById(model.Id);
-			if (productPicture != null)
-			{
-				productPicture.DisplayOrder = model.DisplayOrder;
-
-				_productService.UpdateProductPicture(productPicture);
-			}
-
-            return ProductPictureList(command, model.ProductId);
-        }
-
 		[HttpPost]
         [Permission(Permissions.Catalog.Product.EditPicture)]
         public ActionResult ProductPictureDelete(int id)
@@ -2376,14 +2299,14 @@ namespace SmartStore.Admin.Controllers
 				_productService.DeleteProductPicture(productPicture);
 			}
 
-            // TODO: (mm) OPTIONALLY delete file!
-            //var file = _mediaService.GetFileById(productPicture.MediaFileId);
-            //if (file != null)
-            //{
-            //    _mediaService.DeleteFile(file.File, true);
-            //}
+			// TODO: (mm) (mc) OPTIONALLY delete file!
+			//var file = _mediaService.GetFileById(productPicture.MediaFileId);
+			//if (file != null)
+			//{
+			//    _mediaService.DeleteFile(file.File, true);
+			//}
 
-			NotifySuccess(T("Admin.Common.DataSuccessfullySaved"));
+			NotifySuccess(T("Admin.Catalog.Products.ProductPictures.Delete.Success"));
 			return new HttpStatusCodeResult(200);
 		}
 

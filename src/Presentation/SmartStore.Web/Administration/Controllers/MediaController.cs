@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 using SmartStore.Core.Domain.Media;
 using SmartStore.Core.Security;
 using SmartStore.Data.Utilities;
 using SmartStore.Services.Media;
 using SmartStore.Web.Framework.Controllers;
+using SmartStore.Web.Framework.Filters;
 using SmartStore.Web.Framework.Security;
-using System.Dynamic;
+using Newtonsoft.Json.Linq;
 
 namespace SmartStore.Admin.Controllers
 {
@@ -20,20 +21,24 @@ namespace SmartStore.Admin.Controllers
         private readonly IMediaService _mediaService;
         private readonly IMediaTypeResolver _mediaTypeResolver;
         private readonly MediaSettings _mediaSettings;
+        private readonly MediaExceptionFactory _exceptionFactory;
 
-		public MediaController(
+        public MediaController(
             IMediaService mediaService,
             IMediaTypeResolver mediaTypeResolver,
-            MediaSettings mediaSettings)
+            MediaSettings mediaSettings,
+            MediaExceptionFactory exceptionFactory)
         {
             _mediaService = mediaService;
             _mediaTypeResolver = mediaTypeResolver;
 			_mediaSettings = mediaSettings;
+            _exceptionFactory = exceptionFactory;
         }
 
         [HttpPost]
         [Permission(Permissions.Media.Upload)]
-        public async Task<ActionResult> Upload(string path, string[] acceptedMediaTypes = null, bool isTransient = false, DuplicateFileHandling duplicateFileHandling = DuplicateFileHandling.ThrowError)
+        [MaxMediaFileSize]
+        public async Task<ActionResult> Upload(string path, string[] typeFilter = null, bool isTransient = false, DuplicateFileHandling duplicateFileHandling = DuplicateFileHandling.ThrowError)
         {
             var len = Request.Files.Count;
             var result = new List<object>(len);
@@ -46,51 +51,68 @@ namespace SmartStore.Admin.Controllers
 
                 try
                 {
-                    if (acceptedMediaTypes != null)
+                    // Check if media type or file extension is allowed.
+                    var extension = Path.GetExtension(fileName).TrimStart('.').ToLower();
+                    if (typeFilter != null)
                     {
-                        // TODO: (mm) pass acceptedMediaTypes. It is always null at the moment.
-                        var mediaType = _mediaTypeResolver.Resolve(Path.GetExtension(fileName), uploadedFile.ContentType);
-                        if (!acceptedMediaTypes.Contains((string)mediaType))
+                        var mediaTypeExtensions = _mediaTypeResolver.ParseTypeFilter(typeFilter);
+                        
+                        if (!mediaTypeExtensions.Contains(extension))
                         {
-                            throw new DeniedMediaTypeException(fileName, mediaType, acceptedMediaTypes);
+                            throw _exceptionFactory.DeniedMediaType(fileName, extension, typeFilter);
+                        }
+                    }
+                    else
+                    {
+                        // Check if extension is allowed by media settings.
+                        if (!_mediaSettings.DocumentTypes.Contains(extension) &&
+                            !_mediaSettings.ImageTypes.Contains(extension) &&
+                            !_mediaSettings.VideoTypes.Contains(extension) &&
+                            !_mediaSettings.AudioTypes.Contains(extension) &&
+                            !_mediaSettings.TextTypes.Contains(extension))      // TODO: BinaryTypes
+                        {
+                            throw _exceptionFactory.DeniedMediaType(fileName, extension);
                         }
                     }
                     
                     var mediaFile = await _mediaService.SaveFileAsync(filePath, uploadedFile.InputStream, isTransient, duplicateFileHandling);
 
-                    result.Add(new 
-                    {
-                        success = true,
-                        fileId = mediaFile.Id,
-                        path = mediaFile.Path,
-                        url = _mediaService.GetUrl(mediaFile, _mediaSettings.ProductThumbPictureSize, host: string.Empty)
-                    });
+                    dynamic o = JObject.FromObject(mediaFile);
+                    o.success = true;
+                    o.url = _mediaService.GetUrl(mediaFile, _mediaSettings.ProductThumbPictureSize, host: string.Empty);
+                    o.createdOn = mediaFile.CreatedOn.ToString();
+                    o.lastUpdated = mediaFile.LastUpdated.ToString();
+
+                    result.Add(o);
                 }
                 catch (Exception ex)
                 {
+                    if (ex is DeniedMediaTypeException)
+                        throw;
+
                     var dupe = (ex as DuplicateMediaFileException)?.File;
 
-                    dynamic resultParams = new ExpandoObject();
-
-                    resultParams.success = false;
-                    resultParams.path = filePath;
-                    resultParams.dupe = ex is DuplicateMediaFileException;
-                    resultParams.message = ex.Message;
+                    dynamic o = dupe != null ? JObject.FromObject(dupe) : new JObject();
+                    o.success = false;
+                    o.dupe = ex is DuplicateMediaFileException;
+                    o.message = ex.Message;             // TODO: rename to errMessage
 
                     if (dupe != null)
                     {
-                        resultParams.fileId = dupe.Id;
-                        resultParams.url = _mediaService.GetUrl(dupe, _mediaSettings.ProductThumbPictureSize, host: string.Empty);
-                        resultParams.date = dupe.CreatedOn.ToString();
-                        resultParams.dimensions = dupe.Dimensions.Width + " x " + dupe.Dimensions.Height;
-                        resultParams.size = dupe.Size;
+                        _mediaService.CheckUniqueFileName(filePath, out string newPath);
+                        
+                        o.newPath = newPath;
+                        o.url = _mediaService.GetUrl(dupe, _mediaSettings.ProductThumbPictureSize, host: string.Empty);
+                        o.createdOn = dupe.CreatedOn.ToString();
+                        o.lastUpdated = dupe.LastUpdated.ToString();
+                        o.dimensions = dupe.Dimensions.Width + " x " + dupe.Dimensions.Height;
                     }
-                    
-                    result.Add(resultParams);
+
+                    result.Add(o);
                 }
             }
 
-            // TODO: (mm) display error notification for every failed file
+            // TODO: (mm) (mc) display error notification for every failed file
 
             return Json(result.Count == 1 ? result[0] : result);
         }

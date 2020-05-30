@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using SmartStore.Core.Domain.Catalog;
 using System.IO;
-using SmartStore.Core.Domain.Media;
+using System.Linq;
+using SmartStore.Core.Domain.Catalog;
 using SmartStore.Core.Domain.Directory;
+using SmartStore.Core.Domain.Media;
+using SmartStore.Core.Domain.Tax;
 
 namespace SmartStore.Data.Setup
 {
@@ -126,16 +127,89 @@ namespace SmartStore.Data.Setup
             return entities;
         }
 
-        private List<Product> GetFashionProducts(Dictionary<int, SpecificationAttribute> specAttributes)
+        private List<Product> GetFashionProducts(
+            Dictionary<string, Category> categories,
+            Dictionary<string, Manufacturer> manufacturers,
+            Dictionary<int, SpecificationAttribute> specAttributes)
         {
-            var result = new List<Product>();
-            var productTemplateSimple = _ctx.Set<ProductTemplate>().First(x => x.ViewPath == "Product");
-            var firstDeliveryTime = _ctx.Set<DeliveryTime>().First(x => x.DisplayOrder == 0);
-            var fashionCategory = _ctx.Set<Category>().First(x => x.Alias == "Fashion");
             var specialPriceEndDate = DateTime.UtcNow.AddMonths(1);
-            var specOptionCotton = _ctx.Set<SpecificationAttribute>().First(x => x.DisplayOrder == 8).SpecificationAttributeOptions.First(x => x.DisplayOrder == 9);
 
-            // Converse All Star
+            var productTemplate = _ctx.Set<ProductTemplate>().First(x => x.ViewPath == "Product");
+            var firstDeliveryTime = _ctx.Set<DeliveryTime>().First(x => x.DisplayOrder == 0);
+            var thirdDeliveryTime = _ctx.Set<DeliveryTime>().First(x => x.DisplayOrder == 2);
+
+            var specOptionCotton = _ctx.Set<SpecificationAttribute>().First(x => x.DisplayOrder == 8).SpecificationAttributeOptions.First(x => x.DisplayOrder == 9);
+            var taxCategoryIdApparel = _ctx.Set<TaxCategory>().First(x => x.Name.Equals(TaxNameApparel)).Id;
+
+            #region Category Shoes
+
+            #region Jack Wolfskin COOGEE LOW
+
+            var jackWolfskinCooGeeLow = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "COOGEE LOW M",
+                MetaTitle = "COOGEE LOW M",
+                ShortDescription = "MÄNNER FREIZEITSCHUHE",
+                FullDescription = "<p>Du bist immer auf dem Sprung: zum Kino, zur neueröffneten Bar oder zum nächsten Stadtfest. Der stylische COOGEE LOW ist DER Schuh für dein Leben in der Stadt. Denn er verbindet Funktion mit Style. Die sportliche EVA - Zwischensohle ist nicht nur leicht und flexibel, sondern dämpft deine Ferse mit ihrer Erhöhung im hinteren Bereich auch besonders gut und ist sehr komfortabel.So sind deine Füße auch nach vielen Stunden noch fit – du wirst es merken, wenn nach einem langen Tag z.B.noch eine spontane Party ansteht. Die Passform haben wir nach dem Vorbild einer Socke gestaltet, sie ist locker und komfortabel.Dennoch bleibt der Schuh in seiner schmalen Form. Dank des atmungsaktiven Obermaterials bleibt das Fußklima angenehm, egal, wie warm es draussen ist.Gleichzeitig ist der Schuh sehr pflegeleicht.Worauf wartest du also noch ? Ab in die City!</p>",
+                Sku = "Wolfskin-4032541",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                Price = 69.90M,
+                OldPrice = 99.95M,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                IsShipEnabled = true,
+                DeliveryTime = firstDeliveryTime,
+                DisplayOrder = 5,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(jackWolfskinCooGeeLow, "product/wolfskin_shoes_coogee_1.png", "wolfskin-shoes-coogee-1");
+
+            jackWolfskinCooGeeLow.ProductCategories.Add(new ProductCategory { Category = categories["Shoes"], DisplayOrder = 1 });
+            jackWolfskinCooGeeLow.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Jack-Wolfskin"], DisplayOrder = 1, });
+
+            #endregion Jack Wolfskin COOGEE LOW
+
+            #region Adidas SUPERSTAR SCHUH
+
+            var adidasSuperstarSchuh = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "SUPERSTAR SCHUH",
+                MetaTitle = "SUPERSTAR SCHUH",
+                ShortDescription = "DER STREETWEAR-KLASSIKER MIT DER SHELL TOE.",
+                FullDescription = "<p>Der adidas Superstar wurde erstmals 1969 herausgebracht und machte seinem Namen schon bald alle Ehre. Heute gilt er als Streetstyle-Legende. In dieser Version kommt der Schuh mit einem bequemen Obermaterial aus Full-Grain-Leder. Perfekt wird der Look durch die klassische Shell Toe aus Gummi für mehr Strapazierfähigkeit.</p>",
+                Sku = "Adidas-C77124",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                Price = 99.95M,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                IsShipEnabled = true,
+                DeliveryTime = firstDeliveryTime,
+                DisplayOrder = 5,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(adidasSuperstarSchuh, "product/adidas_superstar_schuh_1.png", "adidas-superstar-schuh-1");
+
+            jackWolfskinCooGeeLow.ProductCategories.Add(new ProductCategory { Category = categories["Shoes"], DisplayOrder = 1 });
+            jackWolfskinCooGeeLow.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1, });
+
+            #endregion Adidas SUPERSTAR SCHUH
+
+            #region Converse All Star
+
             var converseAllStar = new Product
             {
                 ProductType = ProductType.SimpleProduct,
@@ -144,7 +218,7 @@ namespace SmartStore.Data.Setup
                 ShortDescription = "The classical sneaker!",
                 FullDescription = "<p>Since 1912 and to this day unrivalled: the converse All Star sneaker. A shoe for every occasion.</p>",
                 Sku = "Fashion-112355",
-                ProductTemplateId = productTemplateSimple.Id,
+                ProductTemplateId = productTemplate.Id,
                 AllowCustomerReviews = true,
                 Published = true,
                 ShowOnHomePage = true,
@@ -156,26 +230,18 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 IsShipEnabled = true,
                 DeliveryTime = firstDeliveryTime,
-                DisplayOrder = 1
+                DisplayOrder = 1,
+                TaxCategoryId = taxCategoryIdApparel
             };
 
-            converseAllStar.ProductCategories.Add(new ProductCategory
-            {
-                Category = fashionCategory,
-                DisplayOrder = 1
-            });
+            AddProductPicture(converseAllStar, "product/allstar_converse.jpg", "allstar-converse");
+            AddProductPicture(converseAllStar, "product/allstar_hi_charcoal.jpg", "allstar-converse-charcoal");
+            AddProductPicture(converseAllStar, "product/allstar_hi_maroon.jpg", "allstar-converse-maroon");
+            AddProductPicture(converseAllStar, "product/allstar_hi_navy.jpg", "allstar-converse-navy");
+            AddProductPicture(converseAllStar, "product/allstar_hi_purple.jpg", "allstar-converse-purple");
+            AddProductPicture(converseAllStar, "product/allstar_hi_white.jpg", "allstar-converse-white");
 
-            var allStarImages = new string[] { "product/allstar_converse.jpg", "product/allstar_hi_charcoal.jpg", "product/allstar_hi_maroon.jpg", "product/allstar_hi_navy.jpg",
-                "product/allstar_hi_purple.jpg", "product/allstar_hi_white.jpg" };
-
-            for (var i = 0; i < allStarImages.Length; ++i)
-            {
-                converseAllStar.ProductPictures.Add(new ProductMediaFile
-                {
-                    MediaFile = CreatePicture(allStarImages[i]),
-                    DisplayOrder = i + 1
-                });
-            }
+            converseAllStar.ProductCategories.Add(new ProductCategory { Category = categories["Shoes"], DisplayOrder = 1 });
 
             converseAllStar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
@@ -185,73 +251,14 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
 
-            result.Add(converseAllStar);
+            #endregion Converse All Star
 
-            // Shirt Meccanica
-            var shirtMeccanica = new Product
-            {
-                ProductType = ProductType.SimpleProduct,
-                Name = "Sleeveless shirt Meccanica",
-                MetaTitle = "Sleeveless shirt Meccanica",
-                ShortDescription = "Woman shirt with trendy imprint",
-                FullDescription = "<p>Also in summer, the Ducati goes with fashion style! With the sleeveless shirt Meccanica, every woman can express her passion for Ducati with a comfortable and versatile piece of clothing. The shirt is available in black and vintage red. It carries on the front the traditional lettering in plastisol print, which makes it even clearer and more radiant, while on the back in the neck area is the famous logo with the typical \"wings\" of the fifties.</p>",
-                Sku = "Fashion-987693502",
-                ManufacturerPartNumber = "987693502",
-                Gtin = "987693502",
-                ProductTemplateId = productTemplateSimple.Id,
-                AllowCustomerReviews = true,
-                Published = true,
-                Price = 38.00M,
-                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
-                OrderMinimumQuantity = 1,
-                OrderMaximumQuantity = 10000,
-                StockQuantity = 10000,
-                NotifyAdminForQuantityBelow = 1,
-                IsShipEnabled = true,
-                DeliveryTime = firstDeliveryTime,
-                DisplayOrder = 4
-            };
+            #endregion Category Shoes
 
-            shirtMeccanica.ProductCategories.Add(new ProductCategory
-            {
-                Category = fashionCategory,
-                DisplayOrder = 1
-            });
+            #region Category Jackets
 
-            shirtMeccanica.TierPrices.Add(new TierPrice
-            {
-                Quantity = 10,
-                Price = 36.00M
-            });
-            shirtMeccanica.TierPrices.Add(new TierPrice
-            {
-                Quantity = 50,
-                Price = 29.00M
-            });
+            #region Ladies Jacket
 
-            var shirtMeccanicaImages = new string[] { "product/shirt_meccanica_black_1.jpg", "product/shirt_meccanica_black_2.jpg", "product/shirt_meccanica_black_3.jpg",
-                "product/shirt_meccanica_red_1.jpg", "product/shirt_meccanica_red_2.jpg", "product/shirt_meccanica_red_3.jpg", "product/shirt_meccanica_red_4.jpg"  };
-
-            for (var i = 0; i < shirtMeccanicaImages.Length; ++i)
-            {
-                shirtMeccanica.ProductPictures.Add(new ProductMediaFile
-                {
-                    MediaFile = CreatePicture(shirtMeccanicaImages[i]),
-                    DisplayOrder = i + 1
-                });
-            }
-
-            shirtMeccanica.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
-            {
-                AllowFiltering = true,
-                ShowOnProductPage = true,
-                DisplayOrder = 1,
-                SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
-            });
-
-            result.Add(shirtMeccanica);
-
-            // Ladies jacket
             var ladiesJacket = new Product
             {
                 ProductType = ProductType.SimpleProduct,
@@ -260,7 +267,7 @@ namespace SmartStore.Data.Setup
                 FullDescription = "<p>Lightweight wind and water repellent fabric, lining of soft single jersey knit cuffs on arm and waistband. 2 side pockets with zipper, hood in slightly waisted cut.</p><ul><il>Material: 100% polyamide</il><il>Lining: 65% polyester, 35% cotton</il><il>Lining 2: 100% polyester.</il></ul>",
                 Sku = "Fashion-JN1107",
                 ManufacturerPartNumber = "JN1107",
-                ProductTemplateId = productTemplateSimple.Id,
+                ProductTemplateId = productTemplate.Id,
                 AllowCustomerReviews = true,
                 Published = true,
                 Price = 55.00M,
@@ -276,26 +283,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 IsShipEnabled = true,
                 DeliveryTime = firstDeliveryTime,
-                DisplayOrder = 2
+                DisplayOrder = 2,
+                TaxCategoryId = taxCategoryIdApparel
             };
 
-            ladiesJacket.ProductCategories.Add(new ProductCategory
-            {
-                Category = fashionCategory,
-                DisplayOrder = 1
-            });
+            AddProductPicture(ladiesJacket, "product/ladies_jacket_silver.jpg", "ladies-jacket-silver");
+            AddProductPicture(ladiesJacket, "product/ladies_jacket_black.jpg", "ladies-jacket-black");
+            AddProductPicture(ladiesJacket, "product/ladies_jacket_red.jpg", "ladies-jacket-red");
+            AddProductPicture(ladiesJacket, "product/ladies_jacket_orange.jpg", "ladies-jacket-orange");
+            AddProductPicture(ladiesJacket, "product/ladies_jacket_green.jpg", "ladies-jacket-green");
+            AddProductPicture(ladiesJacket, "product/ladies_jacket_blue.jpg", "ladies-jacket-blue");
+            AddProductPicture(ladiesJacket, "product/ladies_jacket_navy.jpg", "ladies-jacket-navy");
 
-            var ladiesJacketImages = new string[] { "product/ladies_jacket_silver.jpg", "product/ladies_jacket_black.jpg", "product/ladies_jacket_red.jpg",
-                "product/ladies_jacket_orange.jpg", "product/ladies_jacket_green.jpg", "product/ladies_jacket_blue.jpg", "product/ladies_jacket_navy.jpg",  };
-
-            for (var i = 0; i < ladiesJacketImages.Length; ++i)
-            {
-                ladiesJacket.ProductPictures.Add(new ProductMediaFile
-                {
-                    MediaFile = CreatePicture(ladiesJacketImages[i]),
-                    DisplayOrder = i + 1
-                });
-            }
+            ladiesJacket.ProductCategories.Add(new ProductCategory { Category = categories["Jackets"], DisplayOrder = 1 });
 
             ladiesJacket.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
@@ -305,10 +305,298 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 11)
             });
 
-            result.Add(ladiesJacket);
+            #endregion Ladies Jacket
 
-            // Clark Premium Blue Jeans
-            var clarkJeans = new Product
+            #region Jack Wolfskin KANUKA POINT
+
+            var jackWolfskinKanukaPoint = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "KANUKA POINT JACKET M",
+                MetaTitle = "KANUKA POINT JACKET M",
+                ShortDescription = "SOFTSHELLJACKE MÄNNER",
+                FullDescription = "<p>Sportliches Design für sportliche Touren: Die KANUKA POINT ist so gern in Bewegung wie du. Die Softshelljacke besteht aus superelastischem und sehr atmungsaktivem Material, das sich unterwegs jeder deiner Bewegungen anpasst. Deswegen nimmst du mit der KANUKA POINT jeden Pass mit Leichtigkeit.Und musst dir auch bei Kraxeleien zum Gipfel keine Gedanken um deine Jacke machen, denn ihr Material hält einiges aus.Auch bei Wind und leichten Schauern bleibst du gelassen.</p>",
+                Sku = "jack-1305851",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                Price = 83.90M,
+                OldPrice = 119.95M,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                IsShipEnabled = true,
+                DeliveryTime = firstDeliveryTime,
+                DisplayOrder = 5,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(jackWolfskinKanukaPoint, "product/jack_wolfskin_kanuka_point_1.png");
+
+            jackWolfskinKanukaPoint.ProductCategories.Add(new ProductCategory { Category = categories["Jackets"], DisplayOrder = 1 });
+            jackWolfskinKanukaPoint.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Jack-Wolfskin"], DisplayOrder = 1, });
+
+            #endregion Jack Wolfskin KANUKA POINT
+
+            #endregion Category Jackets
+
+            #region Category Sunglasses
+
+            #region RayBan TopBar
+
+            var rayBanTopBar = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "Ray-Ban Top Bar RB 3183",
+                IsEsd = false,
+                ShortDescription = "The Ray-Ban Original Wayfarer is the most famous style in the history of sunglasses. With the original design from 1952 the Wayfarer is popular with celebrities, musicians, artists and fashion experts.",
+                FullDescription = "<p>The Ray-Ban ® RB3183 sunglasses give me their aerodynamic shape a reminiscence of speed.</p><p>A rectangular shape and the classic Ray-Ban logo imprinted on the straps characterize this light Halbrand model.</p>",
+                Sku = "P-3004",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                MetaTitle = "Ray-Ban Top Bar RB 3183",
+                Price = 139M,
+                IsGiftCard = false,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                AllowBackInStockSubscriptions = false,
+                IsShipEnabled = true,
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(rayBanTopBar, "product/RayBanTopBar_1.jpg", "rayban-top-bar-1");
+            AddProductPicture(rayBanTopBar, "product/RayBanTopBar_2.jpg", "rayban-top-bar-2");
+            AddProductPicture(rayBanTopBar, "product/RayBanTopBar_3.jpg", "rayban-top-bar-3");
+
+            rayBanTopBar.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            rayBanTopBar.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Ray-Ban"], DisplayOrder = 1 });
+
+            #endregion RayBan TopBar
+
+            #region ORIGINAL WAYFARER AT COLLECTION
+
+            var originalWayfarer = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "ORIGINAL WAYFARER AT COLLECTION",
+                IsEsd = false,
+                ShortDescription = "The Ray-Ban Original Wayfarer is the most famous style in the history of sunglasses. With the original design from 1952 the Wayfarer is popular with celebrities, musicians, artists and fashion experts.",
+                FullDescription = "<p><strong>Radar® EV Path™ PRIZM™ Road</strong> </p> <p>A new milestone in the heritage of performance, Radar® EV takes breakthroughs of a revolutionary design even further with a taller lens that extends the upper field of view. From the comfort and protection of the O Matter® frame to the grip of its Unobtanium® components, this premium design builds on the legacy of Radar innovation and style. </p> <p><strong>Features</strong> </p> <ul>   <li>PRIZM™ is a revolutionary lens technology that fine-tunes vision for specific sports and environments. See what you’ve been missing. Click here to learn more about Prizm Lens Technology.</li>   <li>Path lenses enhance performance if traditional lenses touch your cheeks and help extend the upper field of view</li>   <li>Engineered for maximized airflow for optimal ventilation to keep you cool</li>   <li>Unobtanium® earsocks and nosepads keep glasses in place, increasing grip despite perspiration</li>   <li>Interchangeable Lenses let you change lenses in seconds to optimize vision in any sport environment</li> </ul>",
+                Sku = "P-3003",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                MetaTitle = "ORIGINAL WAYFARER AT COLLECTION",
+                Price = 149M,
+                IsGiftCard = false,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                AllowBackInStockSubscriptions = false,
+                IsShipEnabled = true,
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(originalWayfarer, "product/OriginalWayfarer_1.jpg", "wayfarer-blue-gray-classic-black-1");
+            AddProductPicture(originalWayfarer, "product/OriginalWayfarer_2.jpg", "wayfarer-blue-gray-classic-black-2");
+            AddProductPicture(originalWayfarer, "product/OriginalWayfarer_3.jpg", "wayfarer-gray-course-black");
+            AddProductPicture(originalWayfarer, "product/OriginalWayfarer_4.jpg", "wayfarer-brown-course-havana");
+            AddProductPicture(originalWayfarer, "product/OriginalWayfarer_5.jpg", "wayfarer-green-classic-havana-black");
+            AddProductPicture(originalWayfarer, "product/OriginalWayfarer_6.jpg", "wayfarer-blue-gray-classic-black-3");
+
+            originalWayfarer.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            originalWayfarer.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Ray-Ban"], DisplayOrder = 1 });
+
+            #endregion ORIGINAL WAYFARER AT COLLECTION
+
+            #region Radar EV Prizm Sports Sunglasses
+
+            var radarSportsSunglasses = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "Radar EV Prizm Sports Sunglasses",
+                IsEsd = false,
+                ShortDescription = "",
+                FullDescription = "<p><strong>Radar® EV Path™ PRIZM™ Road</strong> </p> <p>A new milestone in the heritage of performance, Radar® EV takes breakthroughs of a revolutionary design even further with a taller lens that extends the upper field of view. From the comfort and protection of the O Matter® frame to the grip of its Unobtanium® components, this premium design builds on the legacy of Radar innovation and style. </p> <p><strong>Features</strong> </p> <ul>   <li>PRIZM™ is a revolutionary lens technology that fine-tunes vision for specific sports and environments. See what you’ve been missing. Click here to learn more about Prizm Lens Technology.</li>   <li>Path lenses enhance performance if traditional lenses touch your cheeks and help extend the upper field of view</li>   <li>Engineered for maximized airflow for optimal ventilation to keep you cool</li>   <li>Unobtanium® earsocks and nosepads keep glasses in place, increasing grip despite perspiration</li>   <li>Interchangeable Lenses let you change lenses in seconds to optimize vision in any sport environment</li> </ul>",
+                Sku = "P-3001",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                MetaTitle = "Radar EV Prizm Sports Sunglasses",
+                Price = 149M,
+                IsGiftCard = false,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                AllowBackInStockSubscriptions = false,
+                IsShipEnabled = true,
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(radarSportsSunglasses, "product/radar_ev_prizm.jpg");
+
+            radarSportsSunglasses.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            radarSportsSunglasses.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Oakley"], DisplayOrder = 1 });
+
+            #endregion Radar EV Prizm Sports Sunglasses
+
+            #region Custom Flak Sunglasses
+
+            var customFlakSunglasses = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "Custom Flak Sunglasses",
+                IsEsd = false,
+                ShortDescription = "",
+                FullDescription = "<p><strong>Radar® EV Path™ PRIZM™ Road</strong> </p> <p>A new milestone in the heritage of performance, Radar® EV takes breakthroughs of a revolutionary design even further with a taller lens that extends the upper field of view. From the comfort and protection of the O Matter® frame to the grip of its Unobtanium® components, this premium design builds on the legacy of Radar innovation and style. </p> <p><strong>Features</strong> </p> <ul>   <li>PRIZM™ is a revolutionary lens technology that fine-tunes vision for specific sports and environments. See what you’ve been missing. Click here to learn more about Prizm Lens Technology.</li>   <li>Path lenses enhance performance if traditional lenses touch your cheeks and help extend the upper field of view</li>   <li>Engineered for maximized airflow for optimal ventilation to keep you cool</li>   <li>Unobtanium® earsocks and nosepads keep glasses in place, increasing grip despite perspiration</li>   <li>Interchangeable Lenses let you change lenses in seconds to optimize vision in any sport environment</li> </ul>",
+                Sku = "P-3002",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                MetaTitle = "Custom Flak Sunglasses",
+                Price = 179M,
+                IsGiftCard = false,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                AllowBackInStockSubscriptions = false,
+                IsShipEnabled = true,
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(customFlakSunglasses, "product/CustomFlakSunglasses.jpg", "customflak");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlakSunglasses_black_white.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_gray.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_clear.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_jadeiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_positiverediridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_rubyiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_sapphireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_violetiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_24kiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_matteblack_fireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_24kiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_clear.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_fireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_gray.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_jadeiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_positiverediridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_rubyiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_sapphireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_orangeflare_violetiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_24kiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_clear.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_fireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_gray.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_jadeiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_rubyiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_sapphireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_violetiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_polishedwhite_positiverediridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_24kiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_clear.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_fireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_gray.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_jadeiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_positiverediridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_rubyiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_sapphireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_redline_violetiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_24kiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_clear.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_fireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_gray.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_jadeiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_positiverediridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_rubyiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_sapphireiridium.jpg");
+            AddProductPicture(customFlakSunglasses, "product/CustomFlak_skyblue_violetiridium.jpg");
+
+            customFlakSunglasses.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            customFlakSunglasses.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Oakley"], DisplayOrder = 1 });
+
+            #endregion Custom Flak Sunglasses
+
+            #endregion Category Sunglasses
+
+            #region Shirt Meccanica
+
+            var shirtMeccanica = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Name = "Sleeveless shirt Meccanica",
+                MetaTitle = "Sleeveless shirt Meccanica",
+                ShortDescription = "Woman shirt with trendy imprint",
+                FullDescription = "<p>Also in summer, the Ducati goes with fashion style! With the sleeveless shirt Meccanica, every woman can express her passion for Ducati with a comfortable and versatile piece of clothing. The shirt is available in black and vintage red. It carries on the front the traditional lettering in plastisol print, which makes it even clearer and more radiant, while on the back in the neck area is the famous logo with the typical \"wings\" of the fifties.</p>",
+                Sku = "Fashion-987693502",
+                ManufacturerPartNumber = "987693502",
+                Gtin = "987693502",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                Price = 38.00M,
+                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                IsShipEnabled = true,
+                DeliveryTime = firstDeliveryTime,
+                DisplayOrder = 4,
+                TaxCategoryId = taxCategoryIdApparel
+            };
+
+            AddProductPicture(shirtMeccanica, "product/shirt_meccanica_black_1.jpg", "shirt-meccanica-black-1");
+            AddProductPicture(shirtMeccanica, "product/shirt_meccanica_black_2.jpg", "shirt-meccanica-black-2");
+            AddProductPicture(shirtMeccanica, "product/shirt_meccanica_black_3.jpg", "shirt-meccanica-black-3");
+            AddProductPicture(shirtMeccanica, "product/shirt_meccanica_red_1.jpg", "shirt-meccanica-red-1");
+            AddProductPicture(shirtMeccanica, "product/shirt_meccanica_red_2.jpg", "shirt-meccanica-red-2");
+            AddProductPicture(shirtMeccanica, "product/shirt_meccanica_red_3.jpg", "shirt-meccanica-red-3");
+            AddProductPicture(shirtMeccanica, "product/shirt_meccanica_red_4.jpg", "shirt-meccanica-red-4");
+
+            shirtMeccanica.ProductCategories.Add(new ProductCategory { Category = categories["Fashion"], DisplayOrder = 1 });
+
+            shirtMeccanica.TierPrices.Add(new TierPrice
+            {
+                Quantity = 10,
+                Price = 36.00M
+            });
+
+            shirtMeccanica.TierPrices.Add(new TierPrice
+            {
+                Quantity = 50,
+                Price = 29.00M
+            });
+
+            shirtMeccanica.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            {
+                AllowFiltering = true,
+                ShowOnProductPage = true,
+                DisplayOrder = 1,
+                SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
+            });
+
+            #endregion Shirt Meccanica
+
+            #region Clark Premium Blue Jeans
+
+            var clarkPremiumBlueJeans = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Clark Premium Blue Jeans",
@@ -316,7 +604,7 @@ namespace SmartStore.Data.Setup
                 ShortDescription = "Modern Jeans in Easy Comfort Fit",
                 FullDescription = "<p>Real five-pocket jeans by Joker with additional, set-up pocket. Thanks to easy comfort fit with normal rise and comfortable leg width suitable for any character.</p><ul><li>Material: softer, lighter premium denim made of 100% cotton.</li><li>Waist (inch): 29-46</li><li>leg (inch): 30 to 38</li></ul>",
                 Sku = "Fashion-65986524",
-                ProductTemplateId = productTemplateSimple.Id,
+                ProductTemplateId = productTemplate.Id,
                 AllowCustomerReviews = true,
                 Published = true,
                 Price = 109.90M,
@@ -327,22 +615,15 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 IsShipEnabled = true,
                 DeliveryTime = firstDeliveryTime,
-                DisplayOrder = 5
+                DisplayOrder = 5,
+                TaxCategoryId = taxCategoryIdApparel
             };
 
-            clarkJeans.ProductCategories.Add(new ProductCategory
-            {
-                Category = fashionCategory,
-                DisplayOrder = 1
-            });
+            AddProductPicture(clarkPremiumBlueJeans, "product/clark_premium_jeans.jpg", "clark-premium-jeans");
 
-            clarkJeans.ProductPictures.Add(new ProductMediaFile
-            {
-                MediaFile = CreatePicture("product/clark_premium_jeans.jpg"),
-                DisplayOrder = 1
-            });
+            clarkPremiumBlueJeans.ProductCategories.Add(new ProductCategory { Category = categories["Trousers"], DisplayOrder = 1 });
 
-            clarkJeans.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            clarkPremiumBlueJeans.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -350,19 +631,25 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
 
-            result.Add(clarkJeans);
+            #endregion Clark Premium Blue Jeans
 
-            return result;
+            return new List<Product>
+            {
+                jackWolfskinCooGeeLow, adidasSuperstarSchuh, converseAllStar, ladiesJacket, jackWolfskinKanukaPoint,
+                rayBanTopBar, originalWayfarer, radarSportsSunglasses, customFlakSunglasses, shirtMeccanica,
+                clarkPremiumBlueJeans
+            };
         }
 
         private List<Product> GetFurnitureProducts(Dictionary<int, SpecificationAttribute> specAttributes)
         {
-            var result = new List<Product>();
             var productTemplateSimple = _ctx.Set<ProductTemplate>().First(x => x.ViewPath == "Product");
             var thirdDeliveryTime = _ctx.Set<DeliveryTime>().First(x => x.DisplayOrder == 2);
             var furnitureCategory = _ctx.Set<Category>().First(x => x.MetaTitle == "Furniture");
+            var taxCategoryIdElectronics = _ctx.Set<TaxCategory>().First(x => x.Name.Equals(TaxNameElectronics)).Id;
 
-            // Le Corbusier LC 6 table
+            #region Le Corbusier LC 6 table
+
             var corbusierTable = new Product
             {
                 ProductType = ProductType.SimpleProduct,
@@ -382,26 +669,16 @@ namespace SmartStore.Data.Setup
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 IsShipEnabled = true,
-                DeliveryTime = thirdDeliveryTime
+                DeliveryTime = thirdDeliveryTime,
+                TaxCategoryId = taxCategoryIdElectronics
             };
 
-            corbusierTable.ProductCategories.Add(new ProductCategory
-            {
-                Category = furnitureCategory,
-                DisplayOrder = 1
-            });
+            AddProductPicture(corbusierTable, "product/corbusier_lc6_table_1.jpg", "corbusier-lc6-table-1");
+            AddProductPicture(corbusierTable, "product/corbusier_lc6_table_2.jpg", "corbusier-lc6-table-2");
+            AddProductPicture(corbusierTable, "product/corbusier_lc6_table_3.jpg", "corbusier-lc6-table-3");
+            AddProductPicture(corbusierTable, "product/corbusier_lc6_table_4.jpg", "corbusier-lc6-table-4");
 
-            var corbusierTableImages = new string[] { "product/corbusier_lc6_table_1.jpg", "product/corbusier_lc6_table_2.jpg", "product/corbusier_lc6_table_3.jpg",
-                "product/corbusier_lc6_table_4.jpg" };
-
-            for (var i = 0; i < corbusierTableImages.Length; ++i)
-            {
-                corbusierTable.ProductPictures.Add(new ProductMediaFile
-                {
-                    MediaFile = CreatePicture(corbusierTableImages[i]),
-                    DisplayOrder = i + 1
-                });
-            }
+            corbusierTable.ProductCategories.Add(new ProductCategory { Category = furnitureCategory, DisplayOrder = 1 });
 
             corbusierTable.TierPrices.Add(new TierPrice
             {
@@ -429,9 +706,10 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 14)
             });
 
-            result.Add(corbusierTable);
+            #endregion Le Corbusier LC 6 table
 
-            // Ball Chair
+            #region Ball Chair
+
             var ballChair = new Product
             {
                 ProductType = ProductType.SimpleProduct,
@@ -450,25 +728,14 @@ namespace SmartStore.Data.Setup
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 IsShipEnabled = true,
-                DeliveryTime = thirdDeliveryTime
+                DeliveryTime = thirdDeliveryTime,
+                TaxCategoryId = taxCategoryIdElectronics
             };
 
-            ballChair.ProductCategories.Add(new ProductCategory
-            {
-                Category = furnitureCategory,
-                DisplayOrder = 1
-            });
+            AddProductPicture(ballChair, "product/ball_chair_white.jpg", "ball-chair-white");
+            AddProductPicture(ballChair, "product/ball_chair_black.jpg", "ball-chair-black");
 
-            ballChair.ProductPictures.Add(new ProductMediaFile
-            {
-                MediaFile = CreatePicture("product/ball_chair_white.jpg"),
-                DisplayOrder = 1
-            });
-            ballChair.ProductPictures.Add(new ProductMediaFile
-            {
-                MediaFile = CreatePicture("product/ball_chair_black.jpg"),
-                DisplayOrder = 2
-            });
+            ballChair.ProductCategories.Add(new ProductCategory { Category = furnitureCategory, DisplayOrder = 1 });
 
             ballChair.TierPrices.Add(new TierPrice
             {
@@ -496,9 +763,10 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 5)
             });
 
-            result.Add(ballChair);
+            #endregion Ball Chair
 
-            // Lounge chair
+            #region Lounge chair
+
             var loungeChair = new Product
             {
                 ProductType = ProductType.SimpleProduct,
@@ -520,25 +788,14 @@ namespace SmartStore.Data.Setup
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 IsShipEnabled = true,
-                DeliveryTime = thirdDeliveryTime
+                DeliveryTime = thirdDeliveryTime,
+                TaxCategoryId = taxCategoryIdElectronics
             };
 
-            loungeChair.ProductCategories.Add(new ProductCategory
-            {
-                Category = furnitureCategory,
-                DisplayOrder = 1
-            });
+            AddProductPicture(loungeChair, "product/charles_eames_lounge_chair_white.jpg", "charles-eames-lounge-chair-white");
+            AddProductPicture(loungeChair, "product/charles_eames_lounge_chair_black.jpg", "charles-eames-lounge-chair-black");
 
-            loungeChair.ProductPictures.Add(new ProductMediaFile
-            {
-                MediaFile = CreatePicture("product/charles_eames_lounge_chair_white.jpg"),
-                DisplayOrder = 1
-            });
-            loungeChair.ProductPictures.Add(new ProductMediaFile
-            {
-                MediaFile = CreatePicture("product/charles_eames_lounge_chair_black.jpg"),
-                DisplayOrder = 2
-            });
+            loungeChair.ProductCategories.Add(new ProductCategory { Category = furnitureCategory, DisplayOrder = 1 });
 
             loungeChair.TierPrices.Add(new TierPrice
             {
@@ -578,9 +835,10 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 4)
             });
 
-            result.Add(loungeChair);
+            #endregion Lounge chair
 
-            // Cube chair
+            #region Cube chair
+
             var cubeChair = new Product
             {
                 ProductType = ProductType.SimpleProduct,
@@ -601,20 +859,13 @@ namespace SmartStore.Data.Setup
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 IsShipEnabled = true,
-                DeliveryTime = thirdDeliveryTime
+                DeliveryTime = thirdDeliveryTime,
+                TaxCategoryId = taxCategoryIdElectronics
             };
 
-            cubeChair.ProductCategories.Add(new ProductCategory
-            {
-                Category = furnitureCategory,
-                DisplayOrder = 1
-            });
+            AddProductPicture(cubeChair, "product/hoffmann_cube_chair_black.jpg", "hoffmann-cube-chair-black");
 
-            cubeChair.ProductPictures.Add(new ProductMediaFile
-            {
-                MediaFile = CreatePicture("product/hoffmann_cube_chair_black.jpg"),
-                DisplayOrder = 1
-            });
+            cubeChair.ProductCategories.Add(new ProductCategory { Category = furnitureCategory, DisplayOrder = 1 });
 
             cubeChair.TierPrices.Add(new TierPrice
             {
@@ -635,9 +886,12 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 5)
             });
 
-            result.Add(cubeChair);
+            #endregion Cube chair
 
-            return result;
+            return new List<Product>
+            {
+                corbusierTable, ballChair, loungeChair, cubeChair
+            };
         }
 
         public IList<Product> Products()
@@ -652,135 +906,13 @@ namespace SmartStore.Data.Setup
             var manufacturers = _ctx.Set<Manufacturer>().ToList().ToDictionarySafe(x => x.Name, x => x);
             var categories = _ctx.Set<Category>().ToList().ToDictionarySafe(x => x.Alias, x => x);
             var specAttributes = _ctx.Set<SpecificationAttribute>().ToList().ToDictionarySafe(x => x.DisplayOrder, x => x);
+            var taxCategories = _ctx.Set<TaxCategory>().ToList().ToDictionarySafe(x => x.Name, x => x);
 
+            #region Category Golf
 
-            //#region category shoes
+            #region Titleist SM6 Tour Chrome
 
-            //var categoryShoes = _ctx.Set<Category>().First(x => x.Alias == "Shoes");
-
-            //#region product Jack Wolfskin COOGEE LOW M
-
-            //var productJackWolfskinCooGeeLowM = new Product
-            //{
-            //    ProductType = ProductType.SimpleProduct,
-            //    Name = "COOGEE LOW M",
-            //    MetaTitle = "COOGEE LOW M",
-            //    ShortDescription = "MÄNNER FREIZEITSCHUHE",
-            //    FullDescription = "<p>Du bist immer auf dem Sprung: zum Kino, zur neueröffneten Bar oder zum nächsten Stadtfest. Der stylische COOGEE LOW ist DER Schuh für dein Leben in der Stadt. Denn er verbindet Funktion mit Style. Die sportliche EVA - Zwischensohle ist nicht nur leicht und flexibel, sondern dämpft deine Ferse mit ihrer Erhöhung im hinteren Bereich auch besonders gut und ist sehr komfortabel.So sind deine Füße auch nach vielen Stunden noch fit – du wirst es merken, wenn nach einem langen Tag z.B.noch eine spontane Party ansteht. Die Passform haben wir nach dem Vorbild einer Socke gestaltet, sie ist locker und komfortabel.Dennoch bleibt der Schuh in seiner schmalen Form. Dank des atmungsaktiven Obermaterials bleibt das Fußklima angenehm, egal, wie warm es draussen ist.Gleichzeitig ist der Schuh sehr pflegeleicht.Worauf wartest du also noch ? Ab in die City!</p>",
-            //    Sku = "Wolfskin-4032541",
-            //    ProductTemplateId = productTemplate.Id,
-            //    AllowCustomerReviews = true,
-            //    Published = true,
-            //    Price = 69.90M,
-            //    OldPrice = 99.95M,
-            //    ManageInventoryMethod = ManageInventoryMethod.ManageStock,
-            //    OrderMinimumQuantity = 1,
-            //    OrderMaximumQuantity = 10000,
-            //    StockQuantity = 10000,
-            //    NotifyAdminForQuantityBelow = 1,
-            //    IsShipEnabled = true,
-            //    DeliveryTime = firstDeliveryTime,
-            //    DisplayOrder = 5
-            //};
-
-            //AddProductPicture(productJackWolfskinCooGeeLowM, "product/wolfskin_shoes_coogee_1.jpg", "jack-wolfskin-shoes-coogee-low-m-1");
-
-            //productJackWolfskinCooGeeLowM.ProductCategories.Add(new ProductCategory { Category = categoryShoes, DisplayOrder = 1 });
-
-            //productJackWolfskinCooGeeLowM.ProductManufacturers.Add(new ProductManufacturer
-            //{
-            //    Manufacturer = _ctx.Set<Manufacturer>().Where(c => c.Name == "Jack-Wolfskin").Single(),
-            //    DisplayOrder = 1,
-            //});
-
-            //#endregion product Jack Wolfskin COOGEE LOW M
-
-            //#region product Adidas SUPERSTAR SCHUH
-
-            //var productAdidasSuperstarSchuh = new Product
-            //{
-            //    ProductType = ProductType.SimpleProduct,
-            //    Name = "SUPERSTAR SCHUH",
-            //    MetaTitle = "SUPERSTAR SCHUH",
-            //    ShortDescription = "DER STREETWEAR-KLASSIKER MIT DER SHELL TOE.",
-            //    FullDescription = "<p>Der adidas Superstar wurde erstmals 1969 herausgebracht und machte seinem Namen schon bald alle Ehre. Heute gilt er als Streetstyle-Legende. In dieser Version kommt der Schuh mit einem bequemen Obermaterial aus Full-Grain-Leder. Perfekt wird der Look durch die klassische Shell Toe aus Gummi für mehr Strapazierfähigkeit.</p>",
-            //    Sku = "Adidas-C77124",
-            //    ProductTemplateId = productTemplate.Id,
-            //    AllowCustomerReviews = true,
-            //    Published = true,
-            //    Price = 99.95M,
-            //    ManageInventoryMethod = ManageInventoryMethod.ManageStock,
-            //    OrderMinimumQuantity = 1,
-            //    OrderMaximumQuantity = 10000,
-            //    StockQuantity = 10000,
-            //    NotifyAdminForQuantityBelow = 1,
-            //    IsShipEnabled = true,
-            //    DeliveryTime = firstDeliveryTime,
-            //    DisplayOrder = 5
-            //};
-
-            //AddProductPicture(productAdidasSuperstarSchuh, "product/adidas_superstar_schuh_1.jpg", "adidas-superstar-schuh-1");
-
-            //productJackWolfskinCooGeeLowM.ProductCategories.Add(new ProductCategory { Category = categoryShoes, DisplayOrder = 1 });
-
-            //productJackWolfskinCooGeeLowM.ProductManufacturers.Add(new ProductManufacturer
-            //{
-            //    Manufacturer = _ctx.Set<Manufacturer>().Where(c => c.Name == "Adidas").Single(),
-            //    DisplayOrder = 1,
-            //});
-
-
-            //#endregion product Adidas SUPERSTAR SCHUH
-            //#endregion category shoes
-
-            #region category jackets
-
-            var categoryJackets = _ctx.Set<Category>().First(x => x.Alias == "Jackets");
-
-            #region product Jack Wolfskin KANUKA POINT
-
-            var productJackWolfsKinKanukaPoint = new Product
-            {
-                ProductType = ProductType.SimpleProduct,
-                Name = "KANUKA POINT JACKET M",
-                MetaTitle = "KANUKA POINT JACKET M",
-                ShortDescription = "SOFTSHELLJACKE MÄNNER",
-                FullDescription = "<p>Sportliches Design für sportliche Touren: Die KANUKA POINT ist so gern in Bewegung wie du. Die Softshelljacke besteht aus superelastischem und sehr atmungsaktivem Material, das sich unterwegs jeder deiner Bewegungen anpasst. Deswegen nimmst du mit der KANUKA POINT jeden Pass mit Leichtigkeit.Und musst dir auch bei Kraxeleien zum Gipfel keine Gedanken um deine Jacke machen, denn ihr Material hält einiges aus.Auch bei Wind und leichten Schauern bleibst du gelassen.</p>",
-                Sku = "jack-1305851",
-                ProductTemplateId = productTemplate.Id,
-                AllowCustomerReviews = true,
-                Published = true,
-                Price = 83.90M,
-                OldPrice = 119.95M,
-                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
-                OrderMinimumQuantity = 1,
-                OrderMaximumQuantity = 10000,
-                StockQuantity = 10000,
-                NotifyAdminForQuantityBelow = 1,
-                IsShipEnabled = true,
-                DeliveryTime = firstDeliveryTime,
-                DisplayOrder = 5
-            };
-
-            AddProductPicture(productJackWolfsKinKanukaPoint, "product/jack_wolfskin_kanuka_point_1.png");
-
-            productJackWolfsKinKanukaPoint.ProductCategories.Add(new ProductCategory { Category = categoryJackets, DisplayOrder = 1 });
-
-            productJackWolfsKinKanukaPoint.ProductManufacturers.Add(new ProductManufacturer
-            {
-                Manufacturer = _ctx.Set<Manufacturer>().Where(c => c.Name == "Jack-Wolfskin").Single(),
-                DisplayOrder = 1,
-            });
-
-            #endregion product Jack Wolfskin KANUKA POINT
-            #endregion category jackets
-
-
-            #region category golf
-
-            #region product Titleist SM6 Tour Chrome
-
-            var productTitleistSM6TourChrome = new Product
+            var titleistSM6TourChrome = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Titleist SM6 Tour Chrome",
@@ -802,20 +934,20 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productTitleistSM6TourChrome, "product/titleist_sm6_tour_chrome.jpg");
+            AddProductPicture(titleistSM6TourChrome, "product/titleist_sm6_tour_chrome.jpg");
 
-            productTitleistSM6TourChrome.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            titleistSM6TourChrome.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            titleistSM6TourChrome.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
 
-            productTitleistSM6TourChrome.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
+            #endregion Titleist SM6 Tour Chrome
 
-            #endregion product Titleist SM6 Tour Chrome
+            #region Titleist Pro V1x
 
-            #region product Titleist Pro V1x
-
-            var productTitleistProV1x = new Product
+            var titleistProV1x = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Titleist Pro V1x",
@@ -836,20 +968,20 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productTitleistProV1x, "product/titleist-pro-v1x.jpg");
+            AddProductPicture(titleistProV1x, "product/titleist-pro-v1x.jpg");
 
-            productTitleistProV1x.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            titleistProV1x.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            titleistProV1x.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
 
-            productTitleistProV1x.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
+            #endregion Titleist Pro V1x
 
-            #endregion product Titleist Pro V1x
+            #region Supreme Golfball
 
-            #region product Supreme Golfball
-
-            var productSupremeGolfball = new Product
+            var supremeGolfball = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Supreme Golfball",
@@ -870,21 +1002,21 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productSupremeGolfball, "product/supremeGolfball_1.jpg");
-            AddProductPicture(productSupremeGolfball, "product/supremeGolfball_2.jpg");
+            AddProductPicture(supremeGolfball, "product/supremeGolfball_1.jpg");
+            AddProductPicture(supremeGolfball, "product/supremeGolfball_2.jpg");
 
-            productSupremeGolfball.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            supremeGolfball.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            supremeGolfball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
 
-            productSupremeGolfball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
+            #endregion Supreme Golfball
 
-            #endregion product Supreme Golfball
+            #region GBB Epic Sub Zero Driver
 
-            #region product GBB Epic Sub Zero Driver
-
-            var productGBBEpicSubZeroDriver = new Product
+            var gbbEpicSubZeroDriver = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "GBB Epic Sub Zero Driver",
@@ -905,24 +1037,24 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productGBBEpicSubZeroDriver, "product/gbb-epic-sub-zero-driver.jpg");
+            AddProductPicture(gbbEpicSubZeroDriver, "product/gbb-epic-sub-zero-driver.jpg");
 
-            productGBBEpicSubZeroDriver.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            gbbEpicSubZeroDriver.ProductCategories.Add(new ProductCategory { Category = categories["Golf"], DisplayOrder = 1 });
+            gbbEpicSubZeroDriver.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
 
-            productGBBEpicSubZeroDriver.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Titleist"], DisplayOrder = 1 });
+            #endregion GBB Epic Sub Zero Driver
 
-            #endregion product GBB Epic Sub Zero Driver
+            #endregion Category Golf
 
-            #endregion category golf
+            #region Category Soccer
 
-            #region category Soccer
+            #region Nike Strike Football
 
-            #region product Nike Strike Football
-
-            var productNikeStrikeFootball = new Product
+            var nikeStrikeFootball = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Nike Strike Football",
@@ -945,16 +1077,16 @@ namespace SmartStore.Data.Setup
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
                 DeliveryTimeId = thirdDeliveryTime.Id,
-                HasTierPrices = true
+                HasTierPrices = true,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productNikeStrikeFootball, "product/nike-strike-football.jpg");
+            AddProductPicture(nikeStrikeFootball, "product/nike-strike-football.jpg");
 
-            productNikeStrikeFootball.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            nikeStrikeFootball.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            nikeStrikeFootball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Nike"], DisplayOrder = 1 });
 
-            productNikeStrikeFootball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Nike"], DisplayOrder = 1 });
-
-            productNikeStrikeFootball.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            nikeStrikeFootball.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -962,7 +1094,7 @@ namespace SmartStore.Data.Setup
                 // Manufacturer -> Nike
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 20)
             });
-            productNikeStrikeFootball.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            nikeStrikeFootball.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -971,15 +1103,15 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 12)
             });
 
-            productNikeStrikeFootball.TierPrices.Add(new TierPrice { Quantity = 6, Price = 26.90M });
-            productNikeStrikeFootball.TierPrices.Add(new TierPrice { Quantity = 12, Price = 24.90M });
-            productNikeStrikeFootball.TierPrices.Add(new TierPrice { Quantity = 24, Price = 22.90M });
+            nikeStrikeFootball.TierPrices.Add(new TierPrice { Quantity = 6, Price = 26.90M });
+            nikeStrikeFootball.TierPrices.Add(new TierPrice { Quantity = 12, Price = 24.90M });
+            nikeStrikeFootball.TierPrices.Add(new TierPrice { Quantity = 24, Price = 22.90M });
 
-            #endregion product Nike Strike Football
+            #endregion Nike Strike Football
 
-            #region product Evopower 5.3 Trainer HS Ball
+            #region Evopower 5.3 Trainer HS Ball
 
-            var productNikeEvoPowerBall = new Product
+            var nikeEvoPowerBall = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Evopower 5.3 Trainer HS Ball",
@@ -1000,16 +1132,16 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productNikeEvoPowerBall, "product/nike-vopower-53-trainer-hs-ball.jpg");
+            AddProductPicture(nikeEvoPowerBall, "product/nike-vopower-53-trainer-hs-ball.jpg");
 
-            productNikeEvoPowerBall.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            nikeEvoPowerBall.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            nikeEvoPowerBall.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Nike"], DisplayOrder = 1 });
 
-            productNikeEvoPowerBall.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Nike"], DisplayOrder = 1 });
-
-            productNikeEvoPowerBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            nikeEvoPowerBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1017,7 +1149,7 @@ namespace SmartStore.Data.Setup
                 // Manufacturer -> Nike
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 20)
             });
-            productNikeEvoPowerBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            nikeEvoPowerBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1028,9 +1160,9 @@ namespace SmartStore.Data.Setup
 
             #endregion Evopower 5.3 Trainer HS Ball
 
-            #region product Torfabrik official game ball
+            #region Torfabrik official game ball
 
-            var productTorfabrikOfficialGameBall = new Product
+            var torfabrikOfficialGameBall = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Torfabrik official game ball",
@@ -1051,20 +1183,20 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productTorfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_white.png", "official-game-ball-white");
-            AddProductPicture(productTorfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_red.png", "official-game-ball-red");
-            AddProductPicture(productTorfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_yellow.png", "official-game-ball-yellow");
-            AddProductPicture(productTorfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_blue.png", "official-game-ball-blue");
-            AddProductPicture(productTorfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_green.png", "official-game-ball-green");
+            AddProductPicture(torfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_white.png", "official-game-ball-white");
+            AddProductPicture(torfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_red.png", "official-game-ball-red");
+            AddProductPicture(torfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_yellow.png", "official-game-ball-yellow");
+            AddProductPicture(torfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_blue.png", "official-game-ball-blue");
+            AddProductPicture(torfabrikOfficialGameBall, "product/torfabrik-offizieller-spielball_green.png", "official-game-ball-green");
 
-            productTorfabrikOfficialGameBall.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            torfabrikOfficialGameBall.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            torfabrikOfficialGameBall.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
 
-            productTorfabrikOfficialGameBall.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
-
-            productTorfabrikOfficialGameBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            torfabrikOfficialGameBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1072,7 +1204,7 @@ namespace SmartStore.Data.Setup
                 // Manufacturer -> Adidas
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 19)
             });
-            productTorfabrikOfficialGameBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            torfabrikOfficialGameBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1083,9 +1215,9 @@ namespace SmartStore.Data.Setup
 
             #endregion Torfabrik official game ball
 
-            #region product Adidas TANGO SALA BALL
+            #region Adidas TANGO SALA BALL
 
-            var productAdidasTangoSalaBall = new Product
+            var adidasTangoSalaBall = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Adidas TANGO SALA BALL",
@@ -1106,22 +1238,22 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productAdidasTangoSalaBall, "product/adidas-tango-pasadena-ball-white.png");
-            AddProductPicture(productAdidasTangoSalaBall, "product/adidas-tango-pasadena-ball-yellow.jpg");
-            AddProductPicture(productAdidasTangoSalaBall, "product/adidas-tango-pasadena-ball-red.jpg");
-            AddProductPicture(productAdidasTangoSalaBall, "product/adidas-tango-pasadena-ball-green.jpg");
-            AddProductPicture(productAdidasTangoSalaBall, "product/adidas-tango-pasadena-ball-gray.jpg");
-            AddProductPicture(productAdidasTangoSalaBall, "product/adidas-tango-pasadena-ball-brown.jpg");
-            AddProductPicture(productAdidasTangoSalaBall, "product/adidas-tango-pasadena-ball-blue.jpg");
+            AddProductPicture(adidasTangoSalaBall, "product/adidas-tango-pasadena-ball-white.png");
+            AddProductPicture(adidasTangoSalaBall, "product/adidas-tango-pasadena-ball-yellow.jpg");
+            AddProductPicture(adidasTangoSalaBall, "product/adidas-tango-pasadena-ball-red.jpg");
+            AddProductPicture(adidasTangoSalaBall, "product/adidas-tango-pasadena-ball-green.jpg");
+            AddProductPicture(adidasTangoSalaBall, "product/adidas-tango-pasadena-ball-gray.jpg");
+            AddProductPicture(adidasTangoSalaBall, "product/adidas-tango-pasadena-ball-brown.jpg");
+            AddProductPicture(adidasTangoSalaBall, "product/adidas-tango-pasadena-ball-blue.jpg");
 
-            productAdidasTangoSalaBall.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            adidasTangoSalaBall.ProductCategories.Add(new ProductCategory { Category = categories["Soccer"], DisplayOrder = 1 });
+            adidasTangoSalaBall.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
 
-            productAdidasTangoSalaBall.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
-
-            productAdidasTangoSalaBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            adidasTangoSalaBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1129,7 +1261,7 @@ namespace SmartStore.Data.Setup
                 // Manufacturer -> Adidas
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 19)
             });
-            productAdidasTangoSalaBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            adidasTangoSalaBall.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1140,13 +1272,13 @@ namespace SmartStore.Data.Setup
 
             #endregion Adidas TANGO SALA BALL
 
-            #endregion category Soccer
+            #endregion Category Soccer
 
-            #region category Basketball
+            #region Category Basketball
 
             #region Wilson Evolution High School Game Basketball
 
-            var productEvolutionHighSchoolGameBasketball = new Product
+            var evolutionBasketball = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Evolution High School Game Basketball",
@@ -1169,24 +1301,24 @@ namespace SmartStore.Data.Setup
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
                 DeliveryTimeId = thirdDeliveryTime.Id,
-                HasTierPrices = true
+                HasTierPrices = true,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productEvolutionHighSchoolGameBasketball, "product/evolution-high-school-game-basketball.jpg");
+            AddProductPicture(evolutionBasketball, "product/evolution-high-school-game-basketball.jpg");
 
-            productEvolutionHighSchoolGameBasketball.ProductCategories.Add(new ProductCategory { Category = categories["Basketball"], DisplayOrder = 1 });
+            evolutionBasketball.ProductCategories.Add(new ProductCategory { Category = categories["Basketball"], DisplayOrder = 1 });
+            evolutionBasketball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
 
-            productEvolutionHighSchoolGameBasketball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
-
-            productEvolutionHighSchoolGameBasketball.TierPrices.Add(new TierPrice { Quantity = 6, Price = 24.90M });
-            productEvolutionHighSchoolGameBasketball.TierPrices.Add(new TierPrice { Quantity = 12, Price = 22.90M });
-            productEvolutionHighSchoolGameBasketball.TierPrices.Add(new TierPrice { Quantity = 24, Price = 20.90M });
+            evolutionBasketball.TierPrices.Add(new TierPrice { Quantity = 6, Price = 24.90M });
+            evolutionBasketball.TierPrices.Add(new TierPrice { Quantity = 12, Price = 22.90M });
+            evolutionBasketball.TierPrices.Add(new TierPrice { Quantity = 24, Price = 20.90M });
 
             #endregion Wilson Evolution High School Game Basketball
 
             #region All Court Basketball
 
-            var productAllCourtBasketball = new Product
+            var allCourtBasketball = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "All-Court Basketball",
@@ -1207,218 +1339,155 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameApparel].Id
             };
 
-            AddProductPicture(productAllCourtBasketball, "product/all-court-basketball.png");
+            AddProductPicture(allCourtBasketball, "product/all-court-basketball.png");
 
-            productAllCourtBasketball.ProductCategories.Add(new ProductCategory { Category = categories["Basketball"], DisplayOrder = 1 });
-
-            productAllCourtBasketball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
+            allCourtBasketball.ProductCategories.Add(new ProductCategory { Category = categories["Basketball"], DisplayOrder = 1 });
+            allCourtBasketball.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Adidas"], DisplayOrder = 1 });
 
             #endregion All Court Basketball
 
-            #endregion category Basketball
+            #endregion Category Basketball
 
-            #region category sunglasses
+            #region Category Gift Cards
 
-            #region product Top bar
+            #region GiftCard10
 
-            var productRayBanTopBar = new Product
+            var giftCard10 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
-                Name = "Ray-Ban Top Bar RB 3183",
-                IsEsd = false,
-                ShortDescription = "The Ray-Ban Original Wayfarer is the most famous style in the history of sunglasses. With the original design from 1952 the Wayfarer is popular with celebrities, musicians, artists and fashion experts.",
-                FullDescription = "<p>The Ray-Ban ® RB3183 sunglasses give me their aerodynamic shape a reminiscence of speed.</p><p>A rectangular shape and the classic Ray-Ban logo imprinted on the straps characterize this light Halbrand model.</p>",
-                Sku = "P-3004",
+                Name = "$10 Virtual Gift Card",
+                IsEsd = true,
+                ShortDescription = "$10 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
+                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
+                Sku = "P-1000",
                 ProductTemplateId = productTemplate.Id,
                 AllowCustomerReviews = true,
                 Published = true,
-                MetaTitle = "Ray-Ban Top Bar RB 3183",
-                Price = 139M,
-                IsGiftCard = false,
-                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                MetaTitle = "$10 Virtual Gift Card",
+                Price = 10M,
+                IsGiftCard = true,
+                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
                 OrderMinimumQuantity = 1,
                 OrderMaximumQuantity = 10000,
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
-                IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DisplayOrder = 1,
+                TaxCategoryId = taxCategories[TaxNameTaxFree].Id
             };
 
-            AddProductPicture(productRayBanTopBar, "product/RayBanTopBar_1.jpg", "rayban-top-bar-1");
-            AddProductPicture(productRayBanTopBar, "product/RayBanTopBar_2.jpg", "rayban-top-bar-2");
-            AddProductPicture(productRayBanTopBar, "product/RayBanTopBar_3.jpg", "rayban-top-bar-3");
+            AddProductPicture(giftCard10, "product/gift_card_10.png");
+            giftCard10.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
 
-            productRayBanTopBar.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            #endregion GiftCard10
 
-            productRayBanTopBar.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Ray-Ban"], DisplayOrder = 1 });
+            #region GiftCard25
 
-            #endregion product Top bar
-
-            #region product ORIGINAL WAYFARER AT COLLECTION
-
-            var productOriginalWayfarer = new Product
+            var giftCard25 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
-                Name = "ORIGINAL WAYFARER AT COLLECTION",
-                IsEsd = false,
-                ShortDescription = "The Ray-Ban Original Wayfarer is the most famous style in the history of sunglasses. With the original design from 1952 the Wayfarer is popular with celebrities, musicians, artists and fashion experts.",
-                FullDescription = "<p><strong>Radar® EV Path™ PRIZM™ Road</strong> </p> <p>A new milestone in the heritage of performance, Radar® EV takes breakthroughs of a revolutionary design even further with a taller lens that extends the upper field of view. From the comfort and protection of the O Matter® frame to the grip of its Unobtanium® components, this premium design builds on the legacy of Radar innovation and style. </p> <p><strong>Features</strong> </p> <ul>   <li>PRIZM™ is a revolutionary lens technology that fine-tunes vision for specific sports and environments. See what you’ve been missing. Click here to learn more about Prizm Lens Technology.</li>   <li>Path lenses enhance performance if traditional lenses touch your cheeks and help extend the upper field of view</li>   <li>Engineered for maximized airflow for optimal ventilation to keep you cool</li>   <li>Unobtanium® earsocks and nosepads keep glasses in place, increasing grip despite perspiration</li>   <li>Interchangeable Lenses let you change lenses in seconds to optimize vision in any sport environment</li> </ul>",
-                Sku = "P-3003",
+                Name = "$25 Virtual Gift Card",
+                IsEsd = true,
+                ShortDescription = "$25 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
+                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
+                Sku = "P-1001",
                 ProductTemplateId = productTemplate.Id,
                 AllowCustomerReviews = true,
                 Published = true,
-                MetaTitle = "ORIGINAL WAYFARER AT COLLECTION",
-                Price = 149M,
-                IsGiftCard = false,
-                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                MetaTitle = "$25 Virtual Gift Card",
+                Price = 25M,
+                IsGiftCard = true,
+                GiftCardType = GiftCardType.Virtual,
+                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
                 OrderMinimumQuantity = 1,
                 OrderMaximumQuantity = 10000,
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
-                IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DisplayOrder = 2,
+                TaxCategoryId = taxCategories[TaxNameTaxFree].Id
             };
 
-            AddProductPicture(productOriginalWayfarer, "product/OriginalWayfarer_1.jpg", "wayfarer-blue-gray-classic-black-1");
-            AddProductPicture(productOriginalWayfarer, "product/OriginalWayfarer_2.jpg", "wayfarer-blue-gray-classic-black-2");
-            AddProductPicture(productOriginalWayfarer, "product/OriginalWayfarer_3.jpg", "wayfarer-gray-course-black");
-            AddProductPicture(productOriginalWayfarer, "product/OriginalWayfarer_4.jpg", "wayfarer-brown-course-havana");
-            AddProductPicture(productOriginalWayfarer, "product/OriginalWayfarer_5.jpg", "wayfarer-green-classic-havana-black");
-            AddProductPicture(productOriginalWayfarer, "product/OriginalWayfarer_6.jpg", "wayfarer-blue-gray-classic-black-3");
+            AddProductPicture(giftCard25, "product/gift_card_25.png");
+            giftCard25.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
 
-            productOriginalWayfarer.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            #endregion GiftCard25
 
-            productOriginalWayfarer.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Ray-Ban"], DisplayOrder = 1 });
+            #region GiftCard50
 
-            #endregion product ORIGINAL WAYFARER AT COLLECTION
-
-            #region product Radar EV Prizm Sports Sunglasses
-
-            var productRadarEVPrizmSportsSunglasses = new Product
+            var giftCard50 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
-                Name = "Radar EV Prizm Sports Sunglasses",
-                IsEsd = false,
-                ShortDescription = "",
-                FullDescription = "<p><strong>Radar® EV Path™ PRIZM™ Road</strong> </p> <p>A new milestone in the heritage of performance, Radar® EV takes breakthroughs of a revolutionary design even further with a taller lens that extends the upper field of view. From the comfort and protection of the O Matter® frame to the grip of its Unobtanium® components, this premium design builds on the legacy of Radar innovation and style. </p> <p><strong>Features</strong> </p> <ul>   <li>PRIZM™ is a revolutionary lens technology that fine-tunes vision for specific sports and environments. See what you’ve been missing. Click here to learn more about Prizm Lens Technology.</li>   <li>Path lenses enhance performance if traditional lenses touch your cheeks and help extend the upper field of view</li>   <li>Engineered for maximized airflow for optimal ventilation to keep you cool</li>   <li>Unobtanium® earsocks and nosepads keep glasses in place, increasing grip despite perspiration</li>   <li>Interchangeable Lenses let you change lenses in seconds to optimize vision in any sport environment</li> </ul>",
-                Sku = "P-3001",
+                Name = "$50 Virtual Gift Card",
+                IsEsd = true,
+                ShortDescription = "$50 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
+                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
+                Sku = "P-1002",
                 ProductTemplateId = productTemplate.Id,
                 AllowCustomerReviews = true,
                 Published = true,
-                MetaTitle = "Radar EV Prizm Sports Sunglasses",
-                Price = 149M,
-                IsGiftCard = false,
-                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                MetaTitle = "$50 Virtual Gift Card",
+                Price = 50M,
+                IsGiftCard = true,
+                GiftCardType = GiftCardType.Virtual,
+                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
                 OrderMinimumQuantity = 1,
                 OrderMaximumQuantity = 10000,
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
-                IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DisplayOrder = 3,
+                TaxCategoryId = taxCategories[TaxNameTaxFree].Id
             };
 
-            AddProductPicture(productRadarEVPrizmSportsSunglasses, "product/radar_ev_prizm.jpg");
+            AddProductPicture(giftCard50, "product/gift_card_50.png");
+            giftCard50.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
 
-            productRadarEVPrizmSportsSunglasses.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            #endregion GiftCard50 
 
-            productRadarEVPrizmSportsSunglasses.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Oakley"], DisplayOrder = 1 });
+            #region GiftCard100
 
-            #endregion product Radar EV Prizm Sports Sunglasses
-
-            #region product Custom Flak Sunglasses
-
-            var productCustomFlakSunglasses = new Product
+            var giftCard100 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
-                Name = "Custom Flak Sunglasses",
-                IsEsd = false,
-                ShortDescription = "",
-                FullDescription = "<p><strong>Radar® EV Path™ PRIZM™ Road</strong> </p> <p>A new milestone in the heritage of performance, Radar® EV takes breakthroughs of a revolutionary design even further with a taller lens that extends the upper field of view. From the comfort and protection of the O Matter® frame to the grip of its Unobtanium® components, this premium design builds on the legacy of Radar innovation and style. </p> <p><strong>Features</strong> </p> <ul>   <li>PRIZM™ is a revolutionary lens technology that fine-tunes vision for specific sports and environments. See what you’ve been missing. Click here to learn more about Prizm Lens Technology.</li>   <li>Path lenses enhance performance if traditional lenses touch your cheeks and help extend the upper field of view</li>   <li>Engineered for maximized airflow for optimal ventilation to keep you cool</li>   <li>Unobtanium® earsocks and nosepads keep glasses in place, increasing grip despite perspiration</li>   <li>Interchangeable Lenses let you change lenses in seconds to optimize vision in any sport environment</li> </ul>",
-                Sku = "P-3002",
+                Name = "$100 Virtual Gift Card",
+                IsEsd = true,
+                ShortDescription = "$100 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
+                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
+                Sku = "P-10033",
                 ProductTemplateId = productTemplate.Id,
                 AllowCustomerReviews = true,
                 Published = true,
-                MetaTitle = "Custom Flak Sunglasses",
-                Price = 179M,
-                IsGiftCard = false,
-                ManageInventoryMethod = ManageInventoryMethod.ManageStock,
+                MetaTitle = "$100 Virtual Gift Card",
+                Price = 100M,
+                IsGiftCard = true,
+                GiftCardType = GiftCardType.Virtual,
+                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
                 OrderMinimumQuantity = 1,
                 OrderMaximumQuantity = 10000,
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
-                IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DisplayOrder = 4,
+                TaxCategoryId = taxCategories[TaxNameTaxFree].Id
             };
 
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlakSunglasses.jpg", "customflak");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlakSunglasses_black_white.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_gray.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_clear.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_jadeiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_positiverediridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_rubyiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_sapphireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_violetiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_24kiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_matteblack_fireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_24kiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_clear.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_fireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_gray.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_jadeiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_positiverediridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_rubyiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_sapphireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_orangeflare_violetiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_24kiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_clear.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_fireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_gray.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_jadeiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_rubyiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_sapphireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_violetiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_polishedwhite_positiverediridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_24kiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_clear.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_fireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_gray.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_jadeiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_positiverediridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_rubyiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_sapphireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_redline_violetiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_24kiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_clear.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_fireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_gray.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_jadeiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_positiverediridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_rubyiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_sapphireiridium.jpg");
-            AddProductPicture(productCustomFlakSunglasses, "product/CustomFlak_skyblue_violetiridium.jpg");
+            AddProductPicture(giftCard100, "product/gift_card_100.png");
+            giftCard100.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
 
-            productCustomFlakSunglasses.ProductCategories.Add(new ProductCategory { Category = categories["Sunglasses"], DisplayOrder = 1 });
+            #endregion GiftCard100
 
-            productCustomFlakSunglasses.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Oakley"], DisplayOrder = 1 });
+            #endregion Category Gift Cards
 
-            #endregion product Custom Flak Sunglasses
+            #region Category Apple
 
+            #region IPhone Plus
 
-            #endregion category sunglasses
-
-            #region category apple
-
-            #region product iphone plus
-
-            var productIphoneplus = new Product
+            var iPhonePlus = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "iPhone Plus",
@@ -1441,20 +1510,22 @@ namespace SmartStore.Data.Setup
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
                 IsFreeShipping = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productIphoneplus, "product/iphone-plus_all_colors.jpg");
-            AddProductPicture(productIphoneplus, "product/iphoneplus_1.jpg", "iphone-plus-default");
-            AddProductPicture(productIphoneplus, "product/iphone-plus_red.jpg");
-            AddProductPicture(productIphoneplus, "product/iphone-plus_silver.jpg");
-            AddProductPicture(productIphoneplus, "product/iphone-plus_black.jpg");
-            AddProductPicture(productIphoneplus, "product/iphone-plus_rose.jpg");
-            AddProductPicture(productIphoneplus, "product/iphone-plus_gold.jpg");
+            AddProductPicture(iPhonePlus, "product/iphone-plus_all_colors.jpg");
+            AddProductPicture(iPhonePlus, "product/iphoneplus_1.jpg", "iphone-plus-default");
+            AddProductPicture(iPhonePlus, "product/iphone-plus_red.jpg");
+            AddProductPicture(iPhonePlus, "product/iphone-plus_silver.jpg");
+            AddProductPicture(iPhonePlus, "product/iphone-plus_black.jpg");
+            AddProductPicture(iPhonePlus, "product/iphone-plus_rose.jpg");
+            AddProductPicture(iPhonePlus, "product/iphone-plus_gold.jpg");
 
-            productIphoneplus.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            iPhonePlus.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            iPhonePlus.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 1 });
 
-            productIphoneplus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPhonePlus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1463,7 +1534,7 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[22].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
 
-            productIphoneplus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPhonePlus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1471,7 +1542,7 @@ namespace SmartStore.Data.Setup
                 // storage capacity -> 64gb
                 SpecificationAttributeOption = specAttributes[27].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
-            productIphoneplus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPhonePlus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1479,7 +1550,7 @@ namespace SmartStore.Data.Setup
                 // storage capacity -> 128gb
                 SpecificationAttributeOption = specAttributes[27].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            productIphoneplus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPhonePlus.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1488,14 +1559,13 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[5].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
 
-            #endregion product iphone plus
+            #endregion IPhone Plus
 
-            #region product Watch Series 2
+            #region Watch Series 2
 
-            var productWatchSeries2 = new Product
+            var watchSeries2 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
-                Visibility = ProductVisibility.Hidden,
                 Name = "Watch Series 2",
                 IsEsd = false,
                 ShortDescription = "Live a better day. Built-in GPS. Water resistance to 50 meters.1 A lightning-fast dual‑core processor. And a display that’s two times brighter than before. Full of features that help you stay active, motivated, and connected, Apple Watch Series 2 is the perfect partner for a healthy life.",
@@ -1515,17 +1585,17 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productWatchSeries2, "product/watchseries2_1.jpg");
-            AddProductPicture(productWatchSeries2, "product/watchseries2_2.jpg");
+            AddProductPicture(watchSeries2, "product/watchseries2_1.jpg");
+            AddProductPicture(watchSeries2, "product/watchseries2_2.jpg");
 
-            productWatchSeries2.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            watchSeries2.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            watchSeries2.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 1 });
 
-            productWatchSeries2.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 1 });
-
-            productWatchSeries2.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            watchSeries2.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1534,7 +1604,7 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[22].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 6)
             });
 
-            productWatchSeries2.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            watchSeries2.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1543,7 +1613,7 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[27].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            productWatchSeries2.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            watchSeries2.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1552,11 +1622,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[5].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
 
-            #endregion product Watch Series 2
+            #endregion Watch Series 2
 
-            #region product Airpods
+            #region Airpods
 
-            var productAirpods = new Product
+            var airPods = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "AirPods",
@@ -1577,25 +1647,25 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productAirpods, "product/airpods_white.jpg", "airpods-white");
-            AddProductPicture(productAirpods, "product/airpods_turquoise.jpg", "airpods-turquoise");
-            AddProductPicture(productAirpods, "product/airpods_lightblue.jpg", "airpods-lightblue");
-            AddProductPicture(productAirpods, "product/airpods_rose.jpg", "airpods-rose");
-            AddProductPicture(productAirpods, "product/airpods_gold.jpg", "airpods-gold");
-            AddProductPicture(productAirpods, "product/airpods_mint.jpg", "airpods-mint");
+            AddProductPicture(airPods, "product/airpods_white.jpg", "airpods-white");
+            AddProductPicture(airPods, "product/airpods_turquoise.jpg", "airpods-turquoise");
+            AddProductPicture(airPods, "product/airpods_lightblue.jpg", "airpods-lightblue");
+            AddProductPicture(airPods, "product/airpods_rose.jpg", "airpods-rose");
+            AddProductPicture(airPods, "product/airpods_gold.jpg", "airpods-gold");
+            AddProductPicture(airPods, "product/airpods_mint.jpg", "airpods-mint");
 
-            productAirpods.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            airPods.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            airPods.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 7 });
 
-            productAirpods.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 7 });
+            #endregion Airpods
 
-            #endregion product Airpods
+            #region Ultimate Apple Pro Hipster Bundle
 
-            #region product Ultimate Apple Pro Hipster Bundle
-
-            var productAppleProHipsterBundle = new Product
+            var appleProHipsterBundle = new Product
             {
                 ProductType = ProductType.BundledProduct,
                 Name = "Ultimate Apple Pro Hipster Bundle",
@@ -1620,24 +1690,24 @@ namespace SmartStore.Data.Setup
                 DeliveryTimeId = thirdDeliveryTime.Id,
                 BundleTitleText = "Bundle includes",
                 BundlePerItemPricing = true,
-                BundlePerItemShoppingCart = true
+                BundlePerItemShoppingCart = true,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productAppleProHipsterBundle, "product/ultimate-apple-pro-hipster-bundle.jpg");
-            AddProductPicture(productAppleProHipsterBundle, "product/airpods_white.jpg", "bundle-airpods-white");
-            AddProductPicture(productAppleProHipsterBundle, "product/watchseries2_2.jpg", "bundle-watchseries");
-            AddProductPicture(productAppleProHipsterBundle, "product/iphoneplus_2.jpg", "bundle-iphoneplus");
-            AddProductPicture(productAppleProHipsterBundle, "category/apple.png", "bundle-apple");
+            AddProductPicture(appleProHipsterBundle, "product/ultimate-apple-pro-hipster-bundle.jpg");
+            AddProductPicture(appleProHipsterBundle, "product/airpods_white.jpg", "bundle-airpods-white");
+            AddProductPicture(appleProHipsterBundle, "product/watchseries2_2.jpg", "bundle-watchseries");
+            AddProductPicture(appleProHipsterBundle, "product/iphoneplus_2.jpg", "bundle-iphoneplus");
+            AddProductPicture(appleProHipsterBundle, "category/apple.png", "bundle-apple");
 
-            productAppleProHipsterBundle.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            appleProHipsterBundle.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            appleProHipsterBundle.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 1 });
 
-            productAppleProHipsterBundle.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 1 });
+            #endregion Ultimate Apple Pro Hipster Bundle
 
-            #endregion product Ultimate Apple Pro Hipster Bundle
+            #region 9,7 IPad
 
-            #region product 9,7 iPad
-
-            var product97ipad = new Product
+            var iPad = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "9,7' iPad",
@@ -1663,26 +1733,26 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(product97ipad, "product/ipad_1.jpg");
-            AddProductPicture(product97ipad, "product/ipad_2.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-yellow.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-turquoise.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-lightblue.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-purple.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-mint.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-rose.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-spacegray.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-gold.jpg");
-            AddProductPicture(product97ipad, "product/97-ipad-silver.jpg");
+            AddProductPicture(iPad, "product/ipad_1.jpg");
+            AddProductPicture(iPad, "product/ipad_2.jpg");
+            AddProductPicture(iPad, "product/97-ipad-yellow.jpg");
+            AddProductPicture(iPad, "product/97-ipad-turquoise.jpg");
+            AddProductPicture(iPad, "product/97-ipad-lightblue.jpg");
+            AddProductPicture(iPad, "product/97-ipad-purple.jpg");
+            AddProductPicture(iPad, "product/97-ipad-mint.jpg");
+            AddProductPicture(iPad, "product/97-ipad-rose.jpg");
+            AddProductPicture(iPad, "product/97-ipad-spacegray.jpg");
+            AddProductPicture(iPad, "product/97-ipad-gold.jpg");
+            AddProductPicture(iPad, "product/97-ipad-silver.jpg");
 
-            product97ipad.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            iPad.ProductCategories.Add(new ProductCategory { Category = categories["Apple"], DisplayOrder = 1 });
+            iPad.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 1 });
 
-            product97ipad.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Apple"], DisplayOrder = 1 });
-
-            product97ipad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1691,7 +1761,7 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[22].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
 
-            product97ipad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1699,7 +1769,7 @@ namespace SmartStore.Data.Setup
                 // storage capacity -> 64gb
                 SpecificationAttributeOption = specAttributes[27].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
-            product97ipad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1707,7 +1777,7 @@ namespace SmartStore.Data.Setup
                 // storage capacity -> 128gb
                 SpecificationAttributeOption = specAttributes[27].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            product97ipad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            iPad.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1716,142 +1786,15 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[5].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
 
-            #endregion product 9,7 iPad
+            #endregion 9,7 IPad
 
-            #endregion category apple
+            #endregion Category Apple
 
-            #region category Gift Cards
+            #region Category Books
 
-            #region product10GiftCard
+            #region Überman
 
-            var product10GiftCard = new Product
-            {
-                ProductType = ProductType.SimpleProduct,
-                Name = "$10 Virtual Gift Card",
-                IsEsd = true,
-                ShortDescription = "$10 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
-                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
-                Sku = "P-1000",
-                ProductTemplateId = productTemplate.Id,
-                AllowCustomerReviews = true,
-                Published = true,
-                MetaTitle = "$10 Virtual Gift Card",
-                Price = 10M,
-                IsGiftCard = true,
-                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
-                OrderMinimumQuantity = 1,
-                OrderMaximumQuantity = 10000,
-                StockQuantity = 10000,
-                NotifyAdminForQuantityBelow = 1,
-                AllowBackInStockSubscriptions = false,
-                DisplayOrder = 1
-            };
-
-            AddProductPicture(product10GiftCard, "product/gift_card_10.png");
-            product10GiftCard.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
-
-            #endregion product10GiftCard
-
-            #region product25GiftCard
-
-            var product25GiftCard = new Product
-            {
-                ProductType = ProductType.SimpleProduct,
-                Name = "$25 Virtual Gift Card",
-                IsEsd = true,
-                ShortDescription = "$25 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
-                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
-                Sku = "P-1001",
-                ProductTemplateId = productTemplate.Id,
-                AllowCustomerReviews = true,
-                Published = true,
-                MetaTitle = "$25 Virtual Gift Card",
-                Price = 25M,
-                IsGiftCard = true,
-                GiftCardType = GiftCardType.Virtual,
-                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
-                OrderMinimumQuantity = 1,
-                OrderMaximumQuantity = 10000,
-                StockQuantity = 10000,
-                NotifyAdminForQuantityBelow = 1,
-                AllowBackInStockSubscriptions = false,
-                DisplayOrder = 2
-            };
-
-            AddProductPicture(product25GiftCard, "product/gift_card_25.png");
-            product25GiftCard.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
-
-            #endregion product25GiftCard
-
-            #region product50GiftCard
-
-            var product50GiftCard = new Product
-            {
-                ProductType = ProductType.SimpleProduct,
-                Name = "$50 Virtual Gift Card",
-                IsEsd = true,
-                ShortDescription = "$50 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
-                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
-                Sku = "P-1002",
-                ProductTemplateId = productTemplate.Id,
-                AllowCustomerReviews = true,
-                Published = true,
-                MetaTitle = "$50 Virtual Gift Card",
-                Price = 50M,
-                IsGiftCard = true,
-                GiftCardType = GiftCardType.Virtual,
-                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
-                OrderMinimumQuantity = 1,
-                OrderMaximumQuantity = 10000,
-                StockQuantity = 10000,
-                NotifyAdminForQuantityBelow = 1,
-                AllowBackInStockSubscriptions = false,
-                DisplayOrder = 3
-            };
-
-            AddProductPicture(product50GiftCard, "product/gift_card_50.png");
-            product50GiftCard.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
-
-            #endregion product50GiftCard
-
-            #region product100GiftCard
-
-            var product100GiftCard = new Product
-            {
-                ProductType = ProductType.SimpleProduct,
-                Name = "$100 Virtual Gift Card",
-                IsEsd = true,
-                ShortDescription = "$100 Gift Card. Gift Cards must be redeemed through our site Web site toward the purchase of eligible products.",
-                FullDescription = "<p>Gift Cards must be redeemed through our site Web site toward the purchase of eligible products. Purchases are deducted from the GiftCard balance. Any unused balance will be placed in the recipient's GiftCard account when redeemed. If an order exceeds the amount of the GiftCard, the balance must be paid with a credit card or other available payment method.</p>",
-                Sku = "P-10033",
-                ProductTemplateId = productTemplate.Id,
-                AllowCustomerReviews = true,
-                Published = true,
-                MetaTitle = "$100 Virtual Gift Card",
-                Price = 100M,
-                IsGiftCard = true,
-                GiftCardType = GiftCardType.Virtual,
-                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
-                OrderMinimumQuantity = 1,
-                OrderMaximumQuantity = 10000,
-                StockQuantity = 10000,
-                NotifyAdminForQuantityBelow = 1,
-                AllowBackInStockSubscriptions = false,
-                DisplayOrder = 4,
-            };
-
-            AddProductPicture(product100GiftCard, "product/gift_card_100.png");
-            product100GiftCard.ProductCategories.Add(new ProductCategory { Category = categories["Gift Cards"], DisplayOrder = 1 });
-
-            #endregion product100GiftCard
-
-            #endregion category Gift Cards
-
-            #region category books
-
-            #region productBooksUberMan
-
-            var productBooksUberMan = new Product
+            var booksUberMan = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Überman: The novel",
@@ -1869,27 +1812,28 @@ namespace SmartStore.Data.Setup
                 StockQuantity = 10000,
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
-                IsShipEnabled = true
+                IsShipEnabled = true,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksUberMan, "product/0000932_uberman-der-roman.jpeg");
-            productBooksUberMan.ProductCategories.Add(new ProductCategory { Category = categories["SPIEGEL-Bestseller"], DisplayOrder = 1 });
+            AddProductPicture(booksUberMan, "product/0000932_uberman-der-roman.jpeg");
+            booksUberMan.ProductCategories.Add(new ProductCategory { Category = categories["SPIEGEL-Bestseller"], DisplayOrder = 1 });
 
-            productBooksUberMan.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksUberMan.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
                 DisplayOrder = 3,
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksUberMan.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksUberMan.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
                 DisplayOrder = 3,
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 7)
             });
-            productBooksUberMan.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksUberMan.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1897,11 +1841,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion productBooksUberMan
+            #endregion Überman
 
-            #region productBooksGefangeneDesHimmels
+            #region Gefangene des Himmels
 
-            var productBooksGefangeneDesHimmels = new Product
+            var booksGefangeneDesHimmels = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "The Prisoner of Heaven: A Novel",
@@ -1920,13 +1864,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksGefangeneDesHimmels, "product/0000935_der-gefangene-des-himmels-roman_300.jpeg");
-            productBooksGefangeneDesHimmels.ProductCategories.Add(new ProductCategory { Category = categories["SPIEGEL-Bestseller"], DisplayOrder = 1 });
+            AddProductPicture(booksGefangeneDesHimmels, "product/0000935_der-gefangene-des-himmels-roman_300.jpeg");
+            booksGefangeneDesHimmels.ProductCategories.Add(new ProductCategory { Category = categories["SPIEGEL-Bestseller"], DisplayOrder = 1 });
 
-            productBooksGefangeneDesHimmels.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksGefangeneDesHimmels.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1935,7 +1880,7 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            productBooksGefangeneDesHimmels.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksGefangeneDesHimmels.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1943,7 +1888,7 @@ namespace SmartStore.Data.Setup
                 // Category -> bound
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 7)
             });
-            productBooksGefangeneDesHimmels.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksGefangeneDesHimmels.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1952,11 +1897,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion productBooksGefangeneDesHimmels
+            #endregion Gefangene des Himmels
 
-            #region productBooksBestGrillingRecipes
+            #region Best grilling recipes
 
-            var productBooksBestGrillingRecipes = new Product
+            var booksBestGrillingRecipes = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Best Grilling Recipes",
@@ -1975,13 +1920,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksBestGrillingRecipes, "product/bestgrillingrecipes.jpg");
-            productBooksBestGrillingRecipes.ProductCategories.Add(new ProductCategory { Category = categories["Cook and enjoy"], DisplayOrder = 1 });
+            AddProductPicture(booksBestGrillingRecipes, "product/bestgrillingrecipes.jpg");
+            booksBestGrillingRecipes.ProductCategories.Add(new ProductCategory { Category = categories["Cook and enjoy"], DisplayOrder = 1 });
 
-            productBooksBestGrillingRecipes.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksBestGrillingRecipes.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1989,7 +1935,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksBestGrillingRecipes.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksBestGrillingRecipes.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -1997,7 +1943,7 @@ namespace SmartStore.Data.Setup
                 // Category -> cook & bake
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 8)
             });
-            productBooksBestGrillingRecipes.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksBestGrillingRecipes.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2006,11 +1952,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
 
-            #endregion productBooksBestGrillingRecipes
+            #endregion Best grilling recipes
 
-            #region productBooksCookingForTwo
+            #region Cooking for two
 
-            var productBooksCookingForTwo = new Product
+            var booksCookingForTwo = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Cooking for Two",
@@ -2029,13 +1975,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = secondDeliveryTime.Id
+                DeliveryTimeId = secondDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksCookingForTwo, "product/cookingfortwo.jpg");
-            productBooksCookingForTwo.ProductCategories.Add(new ProductCategory { Category = categories["Cook and enjoy"], DisplayOrder = 1 });
+            AddProductPicture(booksCookingForTwo, "product/cookingfortwo.jpg");
+            booksCookingForTwo.ProductCategories.Add(new ProductCategory { Category = categories["Cook and enjoy"], DisplayOrder = 1 });
 
-            productBooksCookingForTwo.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksCookingForTwo.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2043,7 +1990,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksCookingForTwo.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksCookingForTwo.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2051,7 +1998,7 @@ namespace SmartStore.Data.Setup
                 // Category -> cook & bake
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 8)
             });
-            productBooksCookingForTwo.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksCookingForTwo.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2060,11 +2007,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
 
-            #endregion productBooksCookingForTwo
+            #endregion Cooking for two
 
-            #region productBooksAutosDerSuperlative
+            #region Autos der Superlative
 
-            var productBooksAutosDerSuperlative = new Product
+            var booksAutosDerSuperlative = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Car of superlatives: the strongest, the first, the most beautiful, the fastest",
@@ -2083,13 +2030,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksAutosDerSuperlative, "product/0000944_autos-der-superlative-die-starksten-die-ersten-die-schonsten-die-schnellsten.jpeg");
-            productBooksAutosDerSuperlative.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
+            AddProductPicture(booksAutosDerSuperlative, "product/0000944_autos-der-superlative-die-starksten-die-ersten-die-schonsten-die-schnellsten.jpeg");
+            booksAutosDerSuperlative.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
 
-            productBooksAutosDerSuperlative.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksAutosDerSuperlative.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2097,7 +2045,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksAutosDerSuperlative.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksAutosDerSuperlative.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2105,7 +2053,7 @@ namespace SmartStore.Data.Setup
                 // Category -> cars
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 6)
             });
-            productBooksAutosDerSuperlative.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksAutosDerSuperlative.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2114,11 +2062,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion productBooksAutosDerSuperlative
+            #endregion Autos der Superlative
 
-            #region productBooksBildatlasMotorraeder
+            #region Bildatlas Motorraeder
 
-            var productBooksBildatlasMotorraeder = new Product
+            var booksBildatlasMotorraeder = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Picture Atlas Motorcycles: With more than 350 brilliant images",
@@ -2137,13 +2085,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksBildatlasMotorraeder, "product/0000942_bildatlas-motorrader-mit-mehr-als-350-brillanten-abbildungen.jpeg");
-            productBooksBildatlasMotorraeder.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
+            AddProductPicture(booksBildatlasMotorraeder, "product/0000942_bildatlas-motorrader-mit-mehr-als-350-brillanten-abbildungen.jpeg");
+            booksBildatlasMotorraeder.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
 
-            productBooksBildatlasMotorraeder.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksBildatlasMotorraeder.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2151,7 +2100,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksBildatlasMotorraeder.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksBildatlasMotorraeder.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2159,7 +2108,7 @@ namespace SmartStore.Data.Setup
                 // Category -> non-fiction
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
-            productBooksBildatlasMotorraeder.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksBildatlasMotorraeder.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2168,11 +2117,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion productBooksBildatlasMotorraeder
+            #endregion Bildatlas Motorraeder
 
-            #region productBooksAutoBuch
+            #region Auto Buch
 
-            var productBooksAutoBuch = new Product
+            var booksAutoBuch = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "The Car Book. The great history with over 1200 models",
@@ -2191,13 +2140,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksAutoBuch, "product/0000947_das-auto-buch-die-grose-chronik-mit-uber-1200-modellen_300.jpeg");
-            productBooksAutoBuch.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
+            AddProductPicture(booksAutoBuch, "product/0000947_das-auto-buch-die-grose-chronik-mit-uber-1200-modellen_300.jpeg");
+            booksAutoBuch.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
 
-            productBooksAutoBuch.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksAutoBuch.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2205,7 +2155,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksAutoBuch.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksAutoBuch.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2213,7 +2163,7 @@ namespace SmartStore.Data.Setup
                 // Category -> non-fiction
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
-            productBooksAutoBuch.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksAutoBuch.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2222,11 +2172,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion productBooksAutoBuch
+            #endregion Auto Buch
 
-            #region productBooksFastCars
+            #region Fast cars
 
-            var productBooksFastCars = new Product
+            var booksFastCars = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Fast Cars, Image Calendar 2013",
@@ -2245,13 +2195,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksFastCars, "product/0000946_fast-cars-bildkalender-2013_300.jpeg");
-            productBooksFastCars.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
+            AddProductPicture(booksFastCars, "product/0000946_fast-cars-bildkalender-2013_300.jpeg");
+            booksFastCars.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
 
-            productBooksFastCars.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksFastCars.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2259,7 +2210,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksFastCars.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksFastCars.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2267,7 +2218,7 @@ namespace SmartStore.Data.Setup
                 // Category -> cars
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 6)
             });
-            productBooksFastCars.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksFastCars.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2276,11 +2227,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion productBooksFastCars
+            #endregion Fast cars
 
-            #region productBooksMotorradAbenteuer
+            #region Motorrad Abenteuer
 
-            var productBooksMotorradAbenteuer = new Product
+            var booksMotorradAbenteuer = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Motorcycle Adventures: Riding for travel enduros",
@@ -2299,13 +2250,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = secondDeliveryTime.Id
+                DeliveryTimeId = secondDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameBooks].Id
             };
 
-            AddProductPicture(productBooksMotorradAbenteuer, "product/0000943_motorrad-abenteuer-fahrtechnik-fur-reise-enduros.jpeg");
-            productBooksMotorradAbenteuer.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
+            AddProductPicture(booksMotorradAbenteuer, "product/0000943_motorrad-abenteuer-fahrtechnik-fur-reise-enduros.jpeg");
+            booksMotorradAbenteuer.ProductCategories.Add(new ProductCategory { Category = categories["Books"], DisplayOrder = 1 });
 
-            productBooksMotorradAbenteuer.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksMotorradAbenteuer.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2313,7 +2265,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksMotorradAbenteuer.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksMotorradAbenteuer.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2321,7 +2273,7 @@ namespace SmartStore.Data.Setup
                 // Category -> cars
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 9)
             });
-            productBooksMotorradAbenteuer.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksMotorradAbenteuer.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2330,15 +2282,15 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion productBooksMotorradAbenteuer
+            #endregion Motorrad Abenteuer
 
-            #endregion category books
+            #endregion Category Books
 
-            #region Instant Download Music / Digital Products
+            #region Category Digital Products & Instant Downloads
 
-            #region product Books Stone of the Wise
+            #region Stone of the Wise
 
-            var productBooksStoneOfTheWise = new Product
+            var booksStoneOfTheWise = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Ebook 'Stone of the Wise' in 'Lorem ipsum'",
@@ -2358,13 +2310,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsDownload = true,
-                HasSampleDownload = true
+                HasSampleDownload = true,
+                TaxCategoryId = taxCategories[TaxNameDigitalGoods].Id
             };
 
-            AddProductPicture(productBooksStoneOfTheWise, "product/stone_of_wisdom.jpg");
-            productBooksStoneOfTheWise.ProductCategories.Add(new ProductCategory { Category = categories["Digital Products"], DisplayOrder = 1 });
+            AddProductPicture(booksStoneOfTheWise, "product/stone_of_wisdom.jpg");
+            booksStoneOfTheWise.ProductCategories.Add(new ProductCategory { Category = categories["Digital Products"], DisplayOrder = 1 });
 
-            productBooksStoneOfTheWise.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksStoneOfTheWise.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2372,7 +2325,7 @@ namespace SmartStore.Data.Setup
                 // Edition -> bound
                 SpecificationAttributeOption = specAttributes[13].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productBooksStoneOfTheWise.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksStoneOfTheWise.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2380,7 +2333,7 @@ namespace SmartStore.Data.Setup
                 // Category -> cars
                 SpecificationAttributeOption = specAttributes[14].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 6)
             });
-            productBooksStoneOfTheWise.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            booksStoneOfTheWise.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2389,12 +2342,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[12].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
 
-            #endregion product Books Stone of the Wise
+            #endregion Stone of the Wise
 
+            #region Antonio Vivaldi: Spring
 
-            #region Antonio Vivaldi: then spring
-
-            var productInstantDownloadVivaldi = new Product
+            var instantDownloadVivaldi = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Antonio Vivaldi: spring",
@@ -2414,13 +2366,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsDownload = true,
-                HasSampleDownload = true
+                HasSampleDownload = true,
+                TaxCategoryId = taxCategories[TaxNameDigitalGoods].Id
             };
 
-            AddProductPicture(productInstantDownloadVivaldi, "product/vivaldi.jpg");
-            productInstantDownloadVivaldi.ProductCategories.Add(new ProductCategory { Category = categories["Digital Products"], DisplayOrder = 1 });
+            AddProductPicture(instantDownloadVivaldi, "product/vivaldi.jpg");
+            instantDownloadVivaldi.ProductCategories.Add(new ProductCategory { Category = categories["Digital Products"], DisplayOrder = 1 });
 
-            productInstantDownloadVivaldi.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            instantDownloadVivaldi.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2428,7 +2381,7 @@ namespace SmartStore.Data.Setup
                 // mp3 quality > 320 kbit/S
                 SpecificationAttributeOption = specAttributes[18].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            productInstantDownloadVivaldi.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            instantDownloadVivaldi.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2437,11 +2390,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[19].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 6)
             });
 
-            #endregion Antonio Vivildi: then spring
+            #endregion Antonio Vivaldi: Spring
 
             #region Beethoven für Elise
 
-            var productInstantDownloadBeethoven = new Product
+            var instantDownloadBeethoven = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Ludwig van Beethoven: For Elise",
@@ -2462,13 +2415,14 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsDownload = true,
-                HasSampleDownload = true
+                HasSampleDownload = true,
+                TaxCategoryId = taxCategories[TaxNameDigitalGoods].Id
             };
 
-            AddProductPicture(productInstantDownloadBeethoven, "product/Beethoven.jpg");
-            productInstantDownloadBeethoven.ProductCategories.Add(new ProductCategory { Category = categories["Digital Products"], DisplayOrder = 1 });
+            AddProductPicture(instantDownloadBeethoven, "product/Beethoven.jpg");
+            instantDownloadBeethoven.ProductCategories.Add(new ProductCategory { Category = categories["Digital Products"], DisplayOrder = 1 });
 
-            productInstantDownloadBeethoven.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            instantDownloadBeethoven.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2476,7 +2430,7 @@ namespace SmartStore.Data.Setup
                 // mp3 quality > 320 kbit/S
                 SpecificationAttributeOption = specAttributes[18].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            productInstantDownloadBeethoven.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            instantDownloadBeethoven.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2487,13 +2441,13 @@ namespace SmartStore.Data.Setup
 
             #endregion Beethoven für Elise
 
-            #endregion Instant Download Music
+            #endregion Category Digital Products & Instant Downloads
 
-            #region watches
+            #region Category Watches
 
-            #region productTRANSOCEANCHRONOGRAPH
+            #region Transocean Chronograph
 
-            var productTRANSOCEANCHRONOGRAPH = new Product
+            var transoceanChronograph = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "TRANSOCEAN CHRONOGRAPH",
@@ -2514,15 +2468,15 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameJewelry].Id
             };
 
-            AddProductPicture(productTRANSOCEANCHRONOGRAPH, "product/transocean-chronograph.jpg");
-            productTRANSOCEANCHRONOGRAPH.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            AddProductPicture(transoceanChronograph, "product/transocean-chronograph.jpg");
+            transoceanChronograph.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            transoceanChronograph.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Breitling"], DisplayOrder = 1 });
 
-            productTRANSOCEANCHRONOGRAPH.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Breitling"], DisplayOrder = 1 });
-
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2530,7 +2484,7 @@ namespace SmartStore.Data.Setup
                 // offer > promotion
                 SpecificationAttributeOption = specAttributes[22].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2538,7 +2492,7 @@ namespace SmartStore.Data.Setup
                 // manufacturer > Breitling
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 18)
             });
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2546,7 +2500,7 @@ namespace SmartStore.Data.Setup
                 // housing > steel
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2554,7 +2508,7 @@ namespace SmartStore.Data.Setup
                 // material -> leather
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 5)
             });
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2562,7 +2516,7 @@ namespace SmartStore.Data.Setup
                 // Gender -> gentlemen
                 SpecificationAttributeOption = specAttributes[7].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2570,7 +2524,7 @@ namespace SmartStore.Data.Setup
                 // movement -> mechanical, self winding
                 SpecificationAttributeOption = specAttributes[9].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2578,7 +2532,7 @@ namespace SmartStore.Data.Setup
                 // diameter -> 44mm
                 SpecificationAttributeOption = specAttributes[24].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            productTRANSOCEANCHRONOGRAPH.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            transoceanChronograph.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2587,11 +2541,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[25].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
 
-            #endregion productTRANSOCEANCHRONOGRAPH
+            #endregion Transocean Chronograph
 
-            #region productTissotT-TouchExpertSolar
+            #region TissotT Touch Expert Solar
 
-            var productTissotTTouchExpertSolar = new Product
+            var tissotTTouchExpertSolar = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Tissot T-Touch Expert Solar",
@@ -2612,17 +2566,17 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameJewelry].Id
             };
 
-            AddProductPicture(productTissotTTouchExpertSolar, "product/tissot-t-touch-expert-solar.jpg");
-            AddProductPicture(productTissotTTouchExpertSolar, "product/tissot-t-touch-expert-solar-t091_2.jpg");
+            AddProductPicture(tissotTTouchExpertSolar, "product/tissot-t-touch-expert-solar.jpg");
+            AddProductPicture(tissotTTouchExpertSolar, "product/tissot-t-touch-expert-solar-t091_2.jpg");
 
-            productTissotTTouchExpertSolar.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            tissotTTouchExpertSolar.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            tissotTTouchExpertSolar.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Tissot"], DisplayOrder = 1 });
 
-            productTissotTTouchExpertSolar.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Tissot"], DisplayOrder = 1 });
-
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2630,7 +2584,7 @@ namespace SmartStore.Data.Setup
                 // offer > best price
                 SpecificationAttributeOption = specAttributes[22].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 8)
             });
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2638,7 +2592,7 @@ namespace SmartStore.Data.Setup
                 // manufacturer > Tissot
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 17)
             });
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2646,7 +2600,7 @@ namespace SmartStore.Data.Setup
                 // housing > steel
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2654,7 +2608,7 @@ namespace SmartStore.Data.Setup
                 // material -> silicone
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 7)
             });
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2662,7 +2616,7 @@ namespace SmartStore.Data.Setup
                 // Gender -> gentlemen
                 SpecificationAttributeOption = specAttributes[7].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2670,7 +2624,7 @@ namespace SmartStore.Data.Setup
                 // movement -> Automatic, self-winding
                 SpecificationAttributeOption = specAttributes[9].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2678,7 +2632,7 @@ namespace SmartStore.Data.Setup
                 // diameter -> 44mm
                 SpecificationAttributeOption = specAttributes[24].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            productTissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            tissotTTouchExpertSolar.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2687,11 +2641,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[25].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
 
-            #endregion productTissotT-TouchExpertSolar
+            #endregion TissotT Touch Expert Solar
 
-            #region productSeikoSRPA49K1
+            #region Seiko SRPA49K1
 
-            var productSeikoSRPA49K1 = new Product
+            var seikoSRPA49K1 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Seiko Mechanical Automatic SRPA49K1",
@@ -2712,15 +2666,15 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameJewelry].Id
             };
 
-            AddProductPicture(productSeikoSRPA49K1, "product/SeikoSRPA49K1.jpg");
-            productSeikoSRPA49K1.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            AddProductPicture(seikoSRPA49K1, "product/SeikoSRPA49K1.jpg");
+            seikoSRPA49K1.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            seikoSRPA49K1.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Seiko"], DisplayOrder = 1 });
 
-            productSeikoSRPA49K1.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Seiko"], DisplayOrder = 1 });
-
-            productSeikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            seikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2728,7 +2682,7 @@ namespace SmartStore.Data.Setup
                 // housing > steel
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productSeikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            seikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2736,7 +2690,7 @@ namespace SmartStore.Data.Setup
                 // material -> stainless steel
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productSeikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            seikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2744,7 +2698,7 @@ namespace SmartStore.Data.Setup
                 // manufacturer > Seiko
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 16)
             });
-            productSeikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            seikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2752,7 +2706,7 @@ namespace SmartStore.Data.Setup
                 // Gender -> gentlemen
                 SpecificationAttributeOption = specAttributes[7].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productSeikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            seikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2760,7 +2714,7 @@ namespace SmartStore.Data.Setup
                 // movement -> quarz
                 SpecificationAttributeOption = specAttributes[9].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productSeikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            seikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2768,7 +2722,7 @@ namespace SmartStore.Data.Setup
                 // closure -> folding clasp
                 SpecificationAttributeOption = specAttributes[25].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
-            productSeikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            seikoSRPA49K1.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2777,12 +2731,11 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[24].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
 
-            #endregion productSeikoSRPA49K1 
+            #endregion Seiko SRPA49K1 
 
+            #region Certina DS Podium Big Size
 
-            #region productWatchesCertinaDSPodiumBigSize
-
-            var productWatchesCertinaDSPodiumBigSize = new Product
+            var certinaDSPodiumBigSize = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Name = "Certina DS Podium Big Size",
@@ -2802,15 +2755,15 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = thirdDeliveryTime.Id
+                DeliveryTimeId = thirdDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameJewelry].Id
             };
 
-            AddProductPicture(productWatchesCertinaDSPodiumBigSize, "product/certina_ds_podium_big.png");
-            productWatchesCertinaDSPodiumBigSize.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            AddProductPicture(certinaDSPodiumBigSize, "product/certina_ds_podium_big.png");
+            certinaDSPodiumBigSize.ProductCategories.Add(new ProductCategory { Category = categories["Watches"], DisplayOrder = 1 });
+            certinaDSPodiumBigSize.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Certina"], DisplayOrder = 1 });
 
-            productWatchesCertinaDSPodiumBigSize.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Certina"], DisplayOrder = 1 });
-
-            productWatchesCertinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            certinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2818,7 +2771,7 @@ namespace SmartStore.Data.Setup
                 // housing > steel
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productWatchesCertinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            certinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2826,7 +2779,7 @@ namespace SmartStore.Data.Setup
                 // material -> leather
                 SpecificationAttributeOption = specAttributes[8].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 5)
             });
-            productWatchesCertinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            certinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2834,7 +2787,7 @@ namespace SmartStore.Data.Setup
                 // manufacturer > Certina
                 SpecificationAttributeOption = specAttributes[20].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 14)
             });
-            productWatchesCertinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            certinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2842,7 +2795,7 @@ namespace SmartStore.Data.Setup
                 // Gender -> gentlemen
                 SpecificationAttributeOption = specAttributes[7].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 1)
             });
-            productWatchesCertinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            certinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2850,7 +2803,7 @@ namespace SmartStore.Data.Setup
                 // movement -> quarz
                 SpecificationAttributeOption = specAttributes[9].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 3)
             });
-            productWatchesCertinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            certinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2858,7 +2811,7 @@ namespace SmartStore.Data.Setup
                 // closure -> folding clasp
                 SpecificationAttributeOption = specAttributes[25].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
-            productWatchesCertinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
+            certinaDSPodiumBigSize.ProductSpecificationAttributes.Add(new ProductSpecificationAttribute
             {
                 AllowFiltering = true,
                 ShowOnProductPage = true,
@@ -2867,24 +2820,15 @@ namespace SmartStore.Data.Setup
                 SpecificationAttributeOption = specAttributes[24].SpecificationAttributeOptions.FirstOrDefault(x => x.DisplayOrder == 2)
             });
 
-            #endregion productWatchesCertinaDSPodiumBigSize
+            #endregion Certina DS Podium Big Size
 
-            #endregion watches                      
+            #endregion Category Watches
 
-            #region gaming
+            #region Category Gaming
 
-            var manuSony = _ctx.Set<Manufacturer>().First(c => c.Name == "Sony");
-            var manuMicrosoft = _ctx.Set<Manufacturer>().First(c => c.Name == "Microsoft");
-            var manuEASports = _ctx.Set<Manufacturer>().First(c => c.Name == "EA Sports");
-            var manuUbisoft = _ctx.Set<Manufacturer>().First(c => c.Name == "Ubisoft");
-            var categoryGaming = _ctx.Set<Category>().First(c => c.Alias == "Gaming");
-            var categoryGamingAccessories = _ctx.Set<Category>().First(c => c.Alias == "Gaming Accessories");
-            var categoryGamingGames = _ctx.Set<Category>().First(c => c.Alias == "Games");
-            var manuWarnerHomme = _ctx.Set<Manufacturer>().First(c => c.Name == "Warner Home Video Games");
+            #region PS3
 
-            #region bundlePs3AssassinCreed
-
-            var productPs3 = new Product
+            var playstation3 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Sku = "Sony-PS399000",
@@ -2905,16 +2849,21 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productPs3, "product/ps4_w_controller.jpg", "ps4-w-controller");
-            AddProductPicture(productPs3, "product/ps4_wo_controller.jpg", "ps4-wo-single");
+            AddProductPicture(playstation3, "product/ps4_w_controller.jpg", "ps4-w-controller");
+            AddProductPicture(playstation3, "product/ps4_wo_controller.jpg", "ps4-wo-single");
 
-            productPs3.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productPs3.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 4 });
+            playstation3.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            playstation3.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 4 });
 
-            var productDualshock4Controller = new Product
+            #endregion PS3
+
+            #region Dualshock 4 Controller
+
+            var dualshock4Controller = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Sku = "Sony-PS399004",
@@ -2934,15 +2883,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productDualshock4Controller, "product/dualshock4.jpg");
-            productDualshock4Controller.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productDualshock4Controller.ProductCategories.Add(new ProductCategory { Category = categories["Gaming Accessories"], DisplayOrder = 1 });
+            AddProductPicture(dualshock4Controller, "product/dualshock4.jpg");
+            dualshock4Controller.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            dualshock4Controller.ProductCategories.Add(new ProductCategory { Category = categories["Gaming Accessories"], DisplayOrder = 1 });
 
+            #endregion Dualshock 4 Controller
 
-            var productMinecraft = new Product
+            #region Minecraft
+
+            var gamingMinecraft = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 //Sku = "Ubi-acreed3",
@@ -2964,15 +2917,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productMinecraft, "product/minecraft.jpg");
-            productMinecraft.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productMinecraft.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 4 });
+            AddProductPicture(gamingMinecraft, "product/minecraft.jpg");
+            gamingMinecraft.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            gamingMinecraft.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 4 });
 
+            #endregion Minecraft
 
-            var productBundlePs3AssassinCreed = new Product
+            #region Bundle PS3, Controller & Minecraft
+
+            var bundleMinecraftPs3 = new Product
             {
                 ProductType = ProductType.BundledProduct,
                 Sku = "Sony-PS399105",
@@ -2996,23 +2953,22 @@ namespace SmartStore.Data.Setup
                 ShowOnHomePage = true,
                 BundleTitleText = "Bundle includes",
                 BundlePerItemPricing = true,
-                BundlePerItemShoppingCart = true
+                BundlePerItemShoppingCart = true,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productBundlePs3AssassinCreed, "product/ps4_bundle_minecraft.jpg");
-            productBundlePs3AssassinCreed.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productBundlePs3AssassinCreed.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 1 });
+            AddProductPicture(bundleMinecraftPs3, "product/ps4_bundle_minecraft.jpg");
+            bundleMinecraftPs3.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            bundleMinecraftPs3.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 1 });
 
-            #endregion bundlePs3AssassinCreed
+            #endregion Bundle PS3, Controller & Minecraft
 
-            #region bundlePs4
+            #region PS4
 
-            var productPs4 = new Product
+            var playstation4 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Sku = "Sony-PS410034",
-                //Sku = "PS410037",
-
                 Name = "PlayStation 4",
                 ShortDescription = "The best place to play. Working with some of the most creative minds in the industry, PlayStation®4 delivers breathtaking and unique gaming experiences.",
                 FullDescription = "<p><h4>The power to perform.</h4><div>PlayStation®4 was designed from the ground up to ensure that game creators can unleash their imaginations to develop the very best games and deliver new play experiences never before possible. With ultra-fast customized processors and 8GB of high-performance unified system memory, PS4™ is the home to games with rich, high-fidelity graphics and deeply immersive experiences that shatter expectations.</div></p><p><ul><li><h4>Processor</h4><ul><li>Processor Technology : Low power x86-64 AMD 'Jaguar', 8 cores</li></ul></li><li><h4>Software</h4><ul><li>Processor : Single-chip custom processor</li></ul></li><li><h4>Display</h4><ul><li>Display Technology : HDMI<br />Digital Output (optical)</li></ul></li><li><h4>General</h4><ul><li>Ethernet ports x speed : Ethernet (10BASE-T, 100BASE-TX, 1000BASE-T); IEEE 802.11 b/g/n; Bluetooth® 2.1 (EDR)</li><li>Hard disk : Built-in</li></ul></li><li><h4>General Specifications</h4><ul><li>Video : BD 6xCAV<br />DVD 8xCAV</li></ul></li><li><h4>Graphics</h4><ul><li>Graphics Processor : 1.84 TFLOPS, AMD Radeon™ Graphics Core Next engine</li></ul></li><li><h4>Interface</h4><ul><li>I/O Port : Super-Speed USB (USB 3.0), AUX</li></ul></li><li><h4>Memory</h4><ul><li>Internal Memory : GDDR5 8GB</li></ul></li></ul></p>",
@@ -3028,17 +2984,21 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productPs4, "product/sony_ps4.png", "sony-ps4");
-            AddProductPicture(productPs4, "product/sony_dualshock4_wirelesscontroller.png");
+            AddProductPicture(playstation4, "product/sony_ps4.png", "sony-ps4");
+            AddProductPicture(playstation4, "product/sony_dualshock4_wirelesscontroller.png");
 
-            productPs4.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productPs4.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 5 });
+            playstation4.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            playstation4.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 5 });
 
+            #endregion PS4
 
-            var productPs4Camera = new Product
+            #region PS4 Camera
+
+            var playstation4Camera = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Sku = "Sony-PS410040",
@@ -3057,15 +3017,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productPs4Camera, "product/sony_ps4_camera.png");
-            productPs4Camera.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productPs4Camera.ProductCategories.Add(new ProductCategory { Category = categories["Gaming Accessories"], DisplayOrder = 3 });
+            AddProductPicture(playstation4Camera, "product/sony_ps4_camera.png");
+            playstation4Camera.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            playstation4Camera.ProductCategories.Add(new ProductCategory { Category = categories["Gaming Accessories"], DisplayOrder = 3 });
 
+            #endregion PS4 Camera
 
-            var productBundlePs4 = new Product
+            #region Bundle PS4, Controller & Camera
+
+            var bundlePs4 = new Product
             {
                 ProductType = ProductType.BundledProduct,
                 Sku = "Sony-PS410099",
@@ -3087,18 +3051,19 @@ namespace SmartStore.Data.Setup
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
                 DeliveryTimeId = firstDeliveryTime.Id,
-                BundleTitleText = "Bundle includes"
+                BundleTitleText = "Bundle includes",
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productBundlePs4, "product/sony_ps4_bundle.png");
-            productBundlePs4.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productBundlePs4.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 2 });
+            AddProductPicture(bundlePs4, "product/sony_ps4_bundle.png");
+            bundlePs4.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            bundlePs4.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 2 });
 
-            #endregion bundlePs4
+            #endregion Bundle PS4, Controller & Camera
 
-            #region groupAccessories
+            #region Accessories
 
-            var productGroupAccessories = new Product
+            var groupAccessories = new Product
             {
                 ProductType = ProductType.GroupedProduct,
                 Sku = "Sony-GroupAccessories",
@@ -3117,18 +3082,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                ShowOnHomePage = true
+                ShowOnHomePage = true,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productGroupAccessories, "category/gaming_accessories.png");
-            productGroupAccessories.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productGroupAccessories.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 3 });
+            AddProductPicture(groupAccessories, "category/gaming_accessories.png");
+            groupAccessories.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            groupAccessories.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 3 });
 
-            #endregion groupAccessories
+            #endregion Accessories
 
-            #region Ps3PlusOneGame
+            #region PS3 & Prince of Persia
 
-            var productPrinceOfPersia = new Product
+            var gamingPrinceOfPersia = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Sku = "Ubi-princepersia",
@@ -3147,18 +3113,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productPrinceOfPersia, "product/princeofpersia.jpg");
-            productPrinceOfPersia.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Ubisoft"], DisplayOrder = 1 });
-            productPrinceOfPersia.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 2 });
+            AddProductPicture(gamingPrinceOfPersia, "product/princeofpersia.jpg");
+            gamingPrinceOfPersia.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Ubisoft"], DisplayOrder = 1 });
+            gamingPrinceOfPersia.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 2 });
 
-            #endregion Ps3PlusOneGame
+            #endregion PS3 & Prince of Persia
 
             #region Horizon Zero Down
 
-            var productHorizonZeroDown = new Product
+            var gamingHorizonZeroDown = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 //Sku = "Ubi-princepersia",
@@ -3179,18 +3146,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productHorizonZeroDown, "product/horizon.jpg");
-            productHorizonZeroDown.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
-            productHorizonZeroDown.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 2 });
+            AddProductPicture(gamingHorizonZeroDown, "product/horizon.jpg");
+            gamingHorizonZeroDown.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Sony"], DisplayOrder = 1 });
+            gamingHorizonZeroDown.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 2 });
 
             #endregion Horizon Zero Down
 
-            #region Fifa 17
+            #region FIFA 17
 
-            var productFifa17 = new Product
+            var gamingFifa17 = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 //Sku = "Ubi-princepersia",
@@ -3211,18 +3179,19 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productFifa17, "product/fifa17.jpg");
-            productFifa17.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["EA Sports"], DisplayOrder = 1 });
-            productFifa17.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 2 });
+            AddProductPicture(gamingFifa17, "product/fifa17.jpg");
+            gamingFifa17.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["EA Sports"], DisplayOrder = 1 });
+            gamingFifa17.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 2 });
 
-            #endregion Fifa 17
+            #endregion FIFA 17
 
             #region Lego Worlds
 
-            var productLegoWorlds = new Product
+            var gamingLegoWorlds = new Product
             {
                 ProductType = ProductType.SimpleProduct,
                 Sku = "Gaming-Lego-001",
@@ -3242,65 +3211,64 @@ namespace SmartStore.Data.Setup
                 NotifyAdminForQuantityBelow = 1,
                 AllowBackInStockSubscriptions = false,
                 IsShipEnabled = true,
-                DeliveryTimeId = firstDeliveryTime.Id
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
             };
 
-            AddProductPicture(productLegoWorlds, "product/legoworlds.jpg");
-            productLegoWorlds.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Warner Home Video Games"], DisplayOrder = 1 });
-            productLegoWorlds.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 3 });
+            AddProductPicture(gamingLegoWorlds, "product/legoworlds.jpg");
+            gamingLegoWorlds.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Warner Home Video Games"], DisplayOrder = 1 });
+            gamingLegoWorlds.ProductCategories.Add(new ProductCategory { Category = categories["Games"], DisplayOrder = 3 });
 
             #endregion Lego Worlds
 
-            //#region XBox One S
+            #region XBox One S
 
-            //var productXBoxOneS = new Product
-            //{
-            //    ProductType = ProductType.SimpleProduct,
-            //    Sku = "Microsoft-xbox1s",
-            //    Name = "Xbox One S 500 GB Konsole",
-            //    ShortDescription = "Genieße über 100 Spiele, die es nur für die Konsole gibt, sowie eine ständig größer werdende Bibliothek an Xbox 360-Spielen auf der Xbox One S im neuen Design – der einzigen Konsole mit 4K Ultra HD Blu-ray, 4K-Videostreaming und HDR. Streame deine Lieblingsfilme und -sendungen in atemberaubendem 4K Ultra HD. Spiele Blockbuster wie Gears of War 4 und Battlefield 1 mit Freunden auf Xbox Live, dem schnellsten und zuverlässigsten Gaming-Netzwerk.",
-            //    FullDescription = "<ul><li>Die ultimativen Spiele und 4K-Entertainment-System.</li> <li><b>40 % kompaktere Konsole<b> <br/> Lasse dich nicht von der Größe täuschen. Mit integriertem Netzteil und bis zu 2 TB Speicherplatz ist die Xbox One S die fortschrittlichste Xbox überhaupt.</li><li><b>Der beste Controller - jetzt noch besser</b> <br/> Der neue Xbox Wireless Controller bietet ein schlankes, optimiertes Design, texturierte Grip - Fläche und Bluetooth zum Spielen auf Windows 10 Geräten. Genieße individuelle Tastenbelegung und verbesserte drahtlose Reichweite und stecke jeden kompatiblen Kopfhörer mit der 3, 5 mm Stereo - Headset - Buchse ein.</li></ul>",
-            //    ProductTemplateId = productTemplate.Id,
-            //    AllowCustomerReviews = true,
-            //    Published = true,
-            //    MetaTitle = "Xbox One S",
-            //    Price = 279.99M,
-            //    OldPrice = 279.99M,
-            //    ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
-            //    OrderMinimumQuantity = 1,
-            //    OrderMaximumQuantity = 10000,
-            //    StockQuantity = 10000,
-            //    NotifyAdminForQuantityBelow = 1,
-            //    AllowBackInStockSubscriptions = false,
-            //    IsShipEnabled = true,
-            //    DeliveryTimeId = firstDeliveryTime.Id
-            //};
+            var xBoxOneS = new Product
+            {
+                ProductType = ProductType.SimpleProduct,
+                Sku = "Microsoft-xbox1s",
+                Name = "Xbox One S 500 GB Konsole",
+                ShortDescription = "Genieße über 100 Spiele, die es nur für die Konsole gibt, sowie eine ständig größer werdende Bibliothek an Xbox 360-Spielen auf der Xbox One S im neuen Design – der einzigen Konsole mit 4K Ultra HD Blu-ray, 4K-Videostreaming und HDR. Streame deine Lieblingsfilme und -sendungen in atemberaubendem 4K Ultra HD. Spiele Blockbuster wie Gears of War 4 und Battlefield 1 mit Freunden auf Xbox Live, dem schnellsten und zuverlässigsten Gaming-Netzwerk.",
+                FullDescription = "<ul><li>Die ultimativen Spiele und 4K-Entertainment-System.</li> <li><b>40 % kompaktere Konsole<b> <br/> Lasse dich nicht von der Größe täuschen. Mit integriertem Netzteil und bis zu 2 TB Speicherplatz ist die Xbox One S die fortschrittlichste Xbox überhaupt.</li><li><b>Der beste Controller - jetzt noch besser</b> <br/> Der neue Xbox Wireless Controller bietet ein schlankes, optimiertes Design, texturierte Grip - Fläche und Bluetooth zum Spielen auf Windows 10 Geräten. Genieße individuelle Tastenbelegung und verbesserte drahtlose Reichweite und stecke jeden kompatiblen Kopfhörer mit der 3, 5 mm Stereo - Headset - Buchse ein.</li></ul>",
+                ProductTemplateId = productTemplate.Id,
+                AllowCustomerReviews = true,
+                Published = true,
+                MetaTitle = "Xbox One S",
+                Price = 279.99M,
+                OldPrice = 279.99M,
+                ManageInventoryMethod = ManageInventoryMethod.DontManageStock,
+                OrderMinimumQuantity = 1,
+                OrderMaximumQuantity = 10000,
+                StockQuantity = 10000,
+                NotifyAdminForQuantityBelow = 1,
+                AllowBackInStockSubscriptions = false,
+                IsShipEnabled = true,
+                DeliveryTimeId = firstDeliveryTime.Id,
+                TaxCategoryId = taxCategories[TaxNameElectronics].Id
+            };
 
-            //AddProductPicture(productXBoxOneS, "product/xbox_one_s_1.png", "microsoft-xbox-one-s-1");
-            //productXBoxOneS.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manuMicrosoft, DisplayOrder = 1 });
-            //productXBoxOneS.ProductCategories.Add(new ProductCategory { Category = categoryGaming, DisplayOrder = 1 });
+            AddProductPicture(xBoxOneS, "product/xbox_one_s_1.png", "microsoft-xbox-one-s-1");
+            xBoxOneS.ProductCategories.Add(new ProductCategory { Category = categories["Gaming"], DisplayOrder = 1 });
+            xBoxOneS.ProductManufacturers.Add(new ProductManufacturer { Manufacturer = manufacturers["Microsoft"], DisplayOrder = 1 });
 
-            //#endregion
+            #endregion XBox One S
 
-            #endregion gaming
+            #endregion Category Gaming
 
             var entities = new List<Product>
             {
-                productTRANSOCEANCHRONOGRAPH, productTissotTTouchExpertSolar, productSeikoSRPA49K1,
-                productTitleistSM6TourChrome, productTitleistProV1x, productGBBEpicSubZeroDriver,
-                productSupremeGolfball, productBooksStoneOfTheWise, productNikeStrikeFootball, productNikeEvoPowerBall,
-                productTorfabrikOfficialGameBall, productAdidasTangoSalaBall, productAllCourtBasketball, productEvolutionHighSchoolGameBasketball, productRayBanTopBar,
-                productOriginalWayfarer, productCustomFlakSunglasses, productRadarEVPrizmSportsSunglasses, productAppleProHipsterBundle, product97ipad, productAirpods,
-                productIphoneplus,productWatchSeries2,product10GiftCard, product25GiftCard, product50GiftCard,product100GiftCard, productBooksUberMan, productBooksGefangeneDesHimmels,
-                productBooksBestGrillingRecipes, productBooksCookingForTwo, productBooksAutosDerSuperlative, productBooksBildatlasMotorraeder,
-                productBooksAutoBuch, productBooksFastCars, productBooksMotorradAbenteuer,
-                productInstantDownloadVivaldi, productInstantDownloadBeethoven, productWatchesCertinaDSPodiumBigSize,
-                productPs3, productMinecraft, productBundlePs3AssassinCreed,
-                productPs4, productDualshock4Controller, productPs4Camera, productBundlePs4,
-                productGroupAccessories, productPrinceOfPersia, productLegoWorlds, productHorizonZeroDown, productFifa17, productJackWolfsKinKanukaPoint
+                transoceanChronograph, tissotTTouchExpertSolar, seikoSRPA49K1, certinaDSPodiumBigSize, titleistSM6TourChrome,
+                titleistProV1x, gbbEpicSubZeroDriver, supremeGolfball, nikeStrikeFootball, nikeEvoPowerBall,
+                torfabrikOfficialGameBall, adidasTangoSalaBall, allCourtBasketball, evolutionBasketball, appleProHipsterBundle,
+                iPad, airPods, iPhonePlus, watchSeries2, giftCard10, giftCard25, giftCard50, giftCard100,
+                booksUberMan, booksGefangeneDesHimmels, booksBestGrillingRecipes, booksCookingForTwo, booksStoneOfTheWise,
+                booksAutosDerSuperlative, booksBildatlasMotorraeder, booksAutoBuch, booksFastCars, booksMotorradAbenteuer,
+                instantDownloadVivaldi, instantDownloadBeethoven, playstation3, bundleMinecraftPs3, playstation4,
+                dualshock4Controller, playstation4Camera, bundlePs4, gamingMinecraft, groupAccessories, gamingPrinceOfPersia,
+                gamingLegoWorlds, gamingHorizonZeroDown, gamingFifa17, xBoxOneS
             };
 
-            entities.AddRange(GetFashionProducts(specAttributes));
+            entities.AddRange(GetFashionProducts(categories, manufacturers, specAttributes));
             entities.AddRange(GetFurnitureProducts(specAttributes));
 
             this.Alter(entities);
@@ -3309,15 +3277,16 @@ namespace SmartStore.Data.Setup
 
         public IList<ProductBundleItem> ProductBundleItems()
         {
-            var utcNow = DateTime.UtcNow;
+            var products = _ctx.Set<Product>().ToList().ToDictionarySafe(x => x.Sku, x => x);
 
-            #region apple bundles
-            var bundleAppleProHipster = _ctx.Set<Product>().First(x => x.Sku == "P-2005-Bundle");
+            #region Bundles Apple
 
-            var bundleItemIproductIphoneplus = new ProductBundleItem()
+            var BundleAppleProHipster = _ctx.Set<Product>().First(x => x.Sku == "P-2005-Bundle");
+
+            var bundleItemIphonePlus = new ProductBundleItem()
             {
-                BundleProduct = bundleAppleProHipster,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "P-2001"),
+                BundleProduct = BundleAppleProHipster,
+                Product = products["P-2001"],
                 Quantity = 1,
                 Discount = 40.0M,
                 Visible = true,
@@ -3325,10 +3294,10 @@ namespace SmartStore.Data.Setup
                 DisplayOrder = 1
             };
 
-            var bundleItemProductWatchSeries2 = new ProductBundleItem()
+            var bundleItemWatchSeries2 = new ProductBundleItem()
             {
-                BundleProduct = bundleAppleProHipster,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "P-2002"),
+                BundleProduct = BundleAppleProHipster,
+                Product = products["P-2002"],
                 Quantity = 2,
                 Discount = 30.0M,
                 Visible = true,
@@ -3336,10 +3305,10 @@ namespace SmartStore.Data.Setup
                 DisplayOrder = 2
             };
 
-            var bundleItemproductAirpods = new ProductBundleItem()
+            var bundleItemAirPods = new ProductBundleItem()
             {
-                BundleProduct = bundleAppleProHipster,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "P-2003"),
+                BundleProduct = BundleAppleProHipster,
+                Product = products["P-2003"],
                 Quantity = 1,
                 Discount = 30.0M,
                 Visible = true,
@@ -3347,10 +3316,10 @@ namespace SmartStore.Data.Setup
                 DisplayOrder = 3
             };
 
-            var bundleItemproductIpad = new ProductBundleItem()
+            var bundleItemIpad = new ProductBundleItem()
             {
-                BundleProduct = bundleAppleProHipster,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "P-2004"),
+                BundleProduct = BundleAppleProHipster,
+                Product = products["P-2004"],
                 Quantity = 1,
                 Discount = 30.0M,
                 Visible = true,
@@ -3358,17 +3327,16 @@ namespace SmartStore.Data.Setup
                 DisplayOrder = 3
             };
 
-            #endregion apple bundles
+            #endregion Bundles Apple
 
-            #region gaming
+            #region Bundles Gaming
 
-            //var bundlePs3AssassinCreed = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS399105");
-            var bundlePs4Minecraft = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS399105");
+            var bundlePs4Minecraft = products["Sony-PS399105"];
 
             var bundleItemPs4Minecraft1 = new ProductBundleItem()
             {
                 BundleProduct = bundlePs4Minecraft,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS399000"),
+                Product = products["Sony-PS399000"],
                 Quantity = 1,
                 Discount = 20.0M,
                 Visible = true,
@@ -3379,7 +3347,7 @@ namespace SmartStore.Data.Setup
             var bundleItemPs4Minecraft2 = new ProductBundleItem()
             {
                 BundleProduct = bundlePs4Minecraft,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS399004"),
+                Product = products["Sony-PS399004"],
                 Quantity = 2,
                 Discount = 30.0M,
                 Visible = true,
@@ -3390,7 +3358,7 @@ namespace SmartStore.Data.Setup
             var bundleItemPs4Minecraft3 = new ProductBundleItem()
             {
                 BundleProduct = bundlePs4Minecraft,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "PD-Minecraft4ps4"),
+                Product = products["PD-Minecraft4ps4"],
                 Quantity = 1,
                 Discount = 20.0M,
                 Visible = true,
@@ -3399,12 +3367,12 @@ namespace SmartStore.Data.Setup
             };
 
 
-            var bundlePs4 = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS410099");
+            var bundlePs4 = products["Sony-PS410099"];
 
             var bundleItemPs41 = new ProductBundleItem
             {
                 BundleProduct = bundlePs4,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS410034"),
+                Product = products["Sony-PS410034"],
                 Quantity = 1,
                 Visible = true,
                 Published = true,
@@ -3414,8 +3382,7 @@ namespace SmartStore.Data.Setup
             var bundleItemPs42 = new ProductBundleItem
             {
                 BundleProduct = bundlePs4,
-                //Product = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS410037"),
-                Product = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS399004"),
+                Product = products["Sony-PS399004"],
                 Quantity = 1,
                 Visible = true,
                 Published = true,
@@ -3425,19 +3392,19 @@ namespace SmartStore.Data.Setup
             var bundleItemPs43 = new ProductBundleItem
             {
                 BundleProduct = bundlePs4,
-                Product = _ctx.Set<Product>().First(x => x.Sku == "Sony-PS410040"),
+                Product = products["Sony-PS410040"],
                 Quantity = 1,
                 Visible = true,
                 Published = true,
                 DisplayOrder = 3
             };
 
-            #endregion gaming
+            #endregion Bundles Gaming
 
             var entities = new List<ProductBundleItem>
             {
-                bundleItemPs4Minecraft1, bundleItemPs4Minecraft2, bundleItemPs4Minecraft3,
-                bundleItemPs41, bundleItemPs42, bundleItemPs43,bundleItemIproductIphoneplus, bundleItemProductWatchSeries2,bundleItemproductAirpods,bundleItemproductIpad
+                bundleItemPs4Minecraft1, bundleItemPs4Minecraft2, bundleItemPs4Minecraft3, bundleItemPs41, bundleItemPs42,
+                bundleItemPs43, bundleItemIphonePlus, bundleItemWatchSeries2, bundleItemAirPods, bundleItemIpad
             };
 
             this.Alter(entities);
@@ -3535,13 +3502,7 @@ namespace SmartStore.Data.Setup
             savedProducts
                 .Where(x => gamingAccessoriesSkus.Contains(x.Sku))
                 .ToList()
-                .Each(x =>
-                {
-                    x.ParentGroupedProductId = productGamingAccessoriesId;
-
-                    //_ctx.Set<Product>().Attach(x);
-                    //_ctx.Entry(x).State = System.Data.Entity.EntityState.Modified;
-                });
+                .Each(x => { x.ParentGroupedProductId = productGamingAccessoriesId; });
 
             _ctx.SaveChanges();
         }
